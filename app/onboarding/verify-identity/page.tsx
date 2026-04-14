@@ -197,28 +197,31 @@ export default function VerifyIdentityPage() {
     currentVerifStepRef.current = currentVerifStep;
   }, [currentVerifStep]);
 
-  const completeStep = useCallback((step, next) => {
-    completedStepsRef.current = [...completedStepsRef.current, step];
-    setCompletedSteps([...completedStepsRef.current]);
+  const completeStep = useCallback(
+    (step: VerificationStep, next: VerificationStep) => {
+      completedStepsRef.current = [...completedStepsRef.current, step];
+      setCompletedSteps([...completedStepsRef.current]);
 
-    if (next === "done") {
-      currentVerifStepRef.current = "done";
-      setCurrentVerifStep("done");
+      if (next === "done") {
+        currentVerifStepRef.current = "done";
+        setCurrentVerifStep("done");
 
-      setTimeout(() => {
-        const capturedFile = captureFaceImage();
-        if (capturedFile) {
-          setFormData({ capturedFaceImage: capturedFile });
-        }
-        stopCamera();
-        setScanStep("complete");
-      }, 600);
-    } else {
-      currentVerifStepRef.current = next;
-      setCurrentVerifStep(next);
-      stepStartTimeRef.current = Date.now();
-    }
-  }, []);
+        setTimeout(() => {
+          const capturedFile = captureFaceImage();
+          if (capturedFile) {
+            setFormData({ capturedFaceImage: capturedFile });
+          }
+          stopCamera();
+          setScanStep("complete");
+        }, 600);
+      } else {
+        currentVerifStepRef.current = next;
+        setCurrentVerifStep(next);
+        stepStartTimeRef.current = Date.now();
+      }
+    },
+    [],
+  );
 
   const processLandmarks = useCallback(
     (landmarks: any[]) => {
