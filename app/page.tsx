@@ -1,65 +1,143 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Headset, Heart, Menu, MessageCircle } from "lucide-react";
+import { heroAgent, heroClient, logo } from "@/assets";
+import { listings } from "@/data";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const [saved, setSaved] = useState<number[]>([]);
+  const router = useRouter();
+
+  const toggleSave = (id: number) => {
+    setSaved((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="max-w-[390px] relative mx-auto min-h-screen">
+      {/* Navbar */}
+      <nav className="flex items-center justify-between px-4 py-5">
+        <div className="flex gap-3 items-center">
+          <Menu className="text-primary cursor-pointer" />
+          <img src={logo} alt="" className="w-22 ml-auto" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <button className="cursor-pointer text-[14px]">Become an Agent</button>
+      </nav>
+
+      {/* -------------------------HERO SECTION--------------------------------- */}
+      <section>
+        {/* Chat Bubbles */}
+        <div className="relative pt-2 px-5 min-h-[100px]">
+          {/* Left bubble — user */}
+          <div className="bubble-left flex items-end relativew-fit">
+            <img
+              src={heroClient}
+              alt="user"
+              className="h-[42px] w-[42px] rounded-[50%] absolute bottom-[-35px] left-[-5px]"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+            <div className="bg-primary/70 text-black rounded-r-full rounded-tl-full max-w-47 py-2 px-3 text-xs/4">
+              Looking for a self con in Port harcourt
+            </div>
+          </div>
+
+          {/* Right bubble — agent */}
+          <div className="bubble-right bubble-left flex items-end relative w-fit ml-auto">
+            <img
+              src={heroAgent}
+              alt="agent"
+              className="h-[42px] w-[42px] rounded-[50%] absolute top-[-35px] right-[-5px]"
+            />
+
+            <div className="bg-secondary/70 text-white rounded-l-full rounded-br-full max-w-47 py-2 px-3 text-xs/4">
+              yes, I'm a verified agent Let's connect
+            </div>
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Hero Text */}
+      <div className="hero-text p-5 text-center">
+        <h1 className="text-3xl/8 tracking-wide">
+          Connecting House Hunters and Agents, All in One Spot.
+        </h1>
+      </div>
+
+      <p className="text-center max-w-[400px] p-3 mx-auto text-tertiary">
+        No more waka up and down. From apartments to shops, even roommates —
+        connect with trusted agents and real people in PH.
+      </p>
+
+      {/* CTA Buttons */}
+      <div className="hero-btns flex items-center gap-3 py-6 px-5">
+        <button
+          onClick={() => router.push("/auth?mode=signup")}
+          className="cta-primary bg-secondary rounded-full cursor-pointer py-3 px-6 text-white"
+        >
+          Get started
+        </button>
+        <button
+          onClick={() => router.push("/auth?mode=signin")}
+          className="cta-secondary cursor-pointer rounded-full py-3 px-6 border"
+        >
+          Become an Agent
+        </button>
+      </div>
+
+      {/* Section Header */}
+      <div className="section-head px-5 pt-7">
+        <p className="text-primary font-bold text-[13px]">No dulling !</p>
+        <h2 className="text-[19px] font-extrabold text-[#1a1a1a] mt-0.5 tracking-tight">
+          Find your next house, shop, or roommate
+        </h2>
+      </div>
+
+      {/* Listing Grid */}
+      <div className="grid-anim grid grid-cols-3 gap-2.5 px-5 pt-4 pb-24">
+        {listings.map((l) => (
+          <div
+            key={l.id}
+            className="listing-card relative rounded-xl overflow-hidden"
+          >
+            {/* Image */}
+            <img
+              src={l.image}
+              alt="listing"
+              className="listing w-full h-[110px] object-cover"
+            />
+            {/* Heart */}
+            <button
+              className="heart-btn absolute top-1.5 right-1.5 bg-white/85 rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+              onClick={() => toggleSave(l.id)}
+            >
+              <Heart
+                size={13}
+                fill={saved.includes(l.id) ? "#e8622a" : "none"}
+                color={saved.includes(l.id) ? "#e8622a" : "#333"}
+              />
+            </button>
+
+            {/* Time & View */}
+            <div className="pt-1.5 pb-1">
+              <p className="text-[9.5px] text-gray-400 font-medium">
+                {l.uploadedTime}
+              </p>
+              <button className="view-btn mt-1 bg-secondary text-white rounded-full px-2.5 py-1 text-[10px] font-semibold cursor-pointer">
+                View Listing
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Floating Chat Button */}
+      <button className="fixed bottom-15 left-5 w-12 h-12 rounded-full bg-primary flex items-center justify-center cursor-pointer shadow-lg shadow-primary/40">
+        <Headset size={22} color="#fff" fill="#fff" />
+      </button>
     </div>
   );
 }

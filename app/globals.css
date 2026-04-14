@@ -1,26 +1,99 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-poppins: var(--font-poppins);
+  --color-primary: #ff6b35;
+  --color-secondary: #0a8754;
+  --color-tertiary: #505050;
+  --color-tertiary-100: #57575726;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: var(--font-poppins), sans-serif;
+  overflow-x: hidden;
+}
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.listing-card:hover .view-btn {
+  background: #2d6a4f;
+}
+.view-btn {
+  transition: background 0.2s;
+}
+.heart-btn:hover {
+  transform: scale(1.15);
+}
+.heart-btn {
+  transition: transform 0.15s;
+}
+.cta-primary:hover {
+  background: #1f5c3e;
+}
+.cta-secondary:hover {
+  background: #f5f5f5;
+}
+.cta-primary,
+.cta-secondary {
+  transition: background 0.2s;
+}
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.bubble-left {
+  animation: slideInLeft 0.5s ease forwards;
+}
+.bubble-right {
+  animation: slideInRight 0.5s 0.25s ease both;
+}
+.hero-text {
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+.hero-sub {
+  animation: fadeUp 0.6s 0.25s ease both;
+}
+.hero-btns {
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+.section-head {
+  animation: fadeUp 0.5s 0.5s ease both;
+}
+.grid-anim {
+  animation: fadeUp 0.6s 0.6s ease both;
 }
