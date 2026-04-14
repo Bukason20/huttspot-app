@@ -5,6 +5,8 @@ export interface Listing {
   image: string;
   uploadedTime: string;
   isFavorite: boolean;
+  title?: string;
+  price?: number;
 }
 
 export const listings: Listing[] = [
