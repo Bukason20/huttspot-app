@@ -1,30 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
-
-export type ListingFor = "SALE" | "ROOM_SHARE" | "RENT";
-export type PaymentType = "MONTHLY" | "YEARLY" | "ONE_TIME";
-
-export interface ListingFormData {
-  // Step 1
-  propertyName: string;
-  propertyType: string;
-  listingFor: ListingFor;
-  price: string;
-  paymentType: PaymentType;
-  // Step 2
-  bedrooms: string;
-  bathrooms: string;
-  amenities: string[];
-  additionalNotes: string;
-  // Step 3
-  city: string;
-  area: string;
-  // Step 4
-  photos: File[];
-  coverPhotoIndex: number;
-  video?: File;
-}
+import { ListingFormData, PropertyPurpose, PaymentType } from "@/lib/types";
 
 interface ListingContextType {
   formData: Partial<ListingFormData>;
@@ -36,8 +13,8 @@ const ListingContext = createContext<ListingContextType | null>(null);
 
 export function ListingProvider({ children }: { children: ReactNode }) {
   const [formData, setFormDataState] = useState<Partial<ListingFormData>>({
-    listingFor: "SALE",
-    paymentType: "MONTHLY",
+    listingFor: "For Rent",
+    paymentType: "Monthly",
     amenities: [],
     coverPhotoIndex: 0,
     photos: [],
@@ -49,8 +26,8 @@ export function ListingProvider({ children }: { children: ReactNode }) {
 
   const reset = () =>
     setFormDataState({
-      listingFor: "SALE",
-      paymentType: "MONTHLY",
+      listingFor: "For Rent",
+      paymentType: "Monthly",
       amenities: [],
       coverPhotoIndex: 0,
       photos: [],

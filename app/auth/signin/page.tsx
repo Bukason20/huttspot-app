@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, CheckCircle, XCircle, X } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { loginUser, googleAuth } from "@/lib/auth";
+import { getUserProfile } from "@/lib/user";
 import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
 import { jwtDecode } from "jwt-decode";
 
@@ -51,11 +52,25 @@ function SignInContent() {
         password: form.password,
       });
 
+      console.log("LOGIN RESPONSE:", res);
+
       setModalMessage(`Welcome back, ${res.user.name}!`);
       setModal("success");
 
-      setTimeout(() => {
-        routeAfterLogin(res.user.isOnboarded);
+      setTimeout(async () => {
+        try {
+          // 🔥 Confirm from backend (source of truth)
+          const profile = await getUserProfile();
+
+          console.log("LOGIN PROFILE:", profile);
+
+          routeAfterLogin(profile.isOnboarded, profile.accountMode);
+        } catch (err) {
+          console.error("Failed to fetch profile after login:", err);
+
+          // fallback
+          routeAfterLogin(res.user.isOnboarded, res.user.accountMode);
+        }
       }, 1500);
     } catch (err: any) {
       setModalMessage(err.message || "Login failed. Please try again.");
@@ -70,7 +85,14 @@ function SignInContent() {
     credentialResponse: CredentialResponse,
   ) => {
     try {
-      const idToken = credentialResponse.credential!;
+      if (!credentialResponse.credential) {
+        console.error("❌ No Google credential received");
+        setModalMessage("Google sign-in failed. Please try again.");
+        setModal("error");
+        return;
+      }
+
+      const idToken = credentialResponse.credential;
       const decoded = jwtDecode<GoogleTokenPayload>(idToken);
 
       try {
@@ -79,11 +101,21 @@ function SignInContent() {
         if (res.user.isOnboarded) {
           setModalMessage(`Welcome back, ${res.user.name}!`);
           setModal("success");
-          setTimeout(() => {
-            routeAfterLogin(true, res.user.accountMode);
+
+          setTimeout(async () => {
+            try {
+              const profile = await getUserProfile();
+
+              console.log("GOOGLE LOGIN PROFILE:", profile);
+
+              routeAfterLogin(profile.isOnboarded, profile.accountMode);
+            } catch (err) {
+              console.error("Failed to fetch profile after Google login:", err);
+
+              routeAfterLogin(true, res.user.accountMode);
+            }
           }, 1500);
         } else {
-          // Has account but not onboarded — go through onboarding
           setFormData({
             username: decoded.name,
             email: decoded.email,
@@ -92,18 +124,13 @@ function SignInContent() {
           });
           router.push("/onboarding");
         }
-      } catch {
-        // No account — go through signup
-        setFormData({
-          username: decoded.name,
-          email: decoded.email,
-          isGoogleSignup: true,
-          idToken,
-        });
-        router.push("/auth/signup");
+      } catch (err: any) {
+        console.error("❌ Google signin backend error:", err);
+        setModalMessage("Google sign-in failed. Please try again.");
+        setModal("error");
       }
     } catch (err: any) {
-      console.error("Google credential decode failed:", err.message);
+      console.error("❌ Google credential decode failed:", err.message);
       setModalMessage("Google sign-in failed. Please try again.");
       setModal("error");
     }
@@ -136,7 +163,7 @@ function SignInContent() {
 
         {/* Password */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">Password</label>
+          <label className="text-sm font-medium text-[#1a1a1a">Password</label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -212,7 +239,9 @@ function SignInContent() {
               <X size={20} />
             </button>
             <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${modal === "success" ? "bg-secondary/10" : "bg-red-100"}`}
+              className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                modal === "success" ? "bg-secondary/10" : "bg-red-100"
+              }`}
             >
               {modal === "success" ? (
                 <CheckCircle size={32} className="text-secondary" />

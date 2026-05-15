@@ -71,21 +71,25 @@ export default function SignUpPage() {
     credentialResponse: CredentialResponse,
   ) => {
     try {
-      const idToken = credentialResponse.credential!;
+      if (!credentialResponse.credential) {
+        console.error("❌ No Google credential received");
+        setError("Google sign-up failed. Please try again.");
+        return;
+      }
+
+      const idToken = credentialResponse.credential;
       const decoded = jwtDecode<GoogleTokenPayload>(idToken);
 
       try {
         const res = await googleAuth(idToken);
 
         if (res.user.isOnboarded) {
-          // Fully onboarded — go to dashboard
           router.push(
             res.user.accountMode === "AGENT"
               ? "/agent/dashboard"
               : "/huttspotter/dashboard",
           );
         } else {
-          // Not onboarded — store info and go to onboarding
           setFormData({
             username: decoded.name,
             email: decoded.email,
@@ -94,18 +98,15 @@ export default function SignUpPage() {
           });
           router.push("/onboarding/account-mode");
         }
-      } catch {
-        // Backend error — treat as new, go through onboarding
-        setFormData({
-          username: decoded.name,
-          email: decoded.email,
-          isGoogleSignup: true,
-          idToken,
-        });
-        router.push("/onboarding/account-mode");
+      } catch (err: any) {
+        console.error("❌ Google signup backend error:", err);
+
+        // TEMP: show error instead of silently redirecting
+        setError("Google sign-up failed. Please try again.");
       }
     } catch (err: any) {
-      console.error("Google credential decode failed:", err.message);
+      console.error("❌ Google credential decode failed:", err.message);
+      setError("Google sign-up failed. Please try again.");
     }
   };
 

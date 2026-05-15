@@ -381,6 +381,27 @@ export default function VerifyIdentityPage() {
     }
   };
 
+  // const captureFaceImage = (): File | null => {
+  //   if (!videoRef.current || !canvasRef.current) return null;
+
+  //   const canvas = canvasRef.current;
+  //   const video = videoRef.current;
+  //   canvas.width = video.videoWidth;
+  //   canvas.height = video.videoHeight;
+
+  //   const ctx = canvas.getContext("2d");
+  //   if (!ctx) return null;
+
+  //   ctx.translate(canvas.width, 0);
+  //   ctx.scale(-1, 1);
+  //   ctx.drawImage(video, 0, 0);
+
+  //   const imageUrl = canvas.toDataURL("image/jpeg", 0.85);
+  //   setCapturedImageUrl(imageUrl);
+
+  //   return new File([dataURLtoBlob(imageUrl)], "face.jpg");
+  // };
+
   const captureFaceImage = (): File | null => {
     if (!videoRef.current || !canvasRef.current) return null;
 
@@ -399,23 +420,37 @@ export default function VerifyIdentityPage() {
     const imageUrl = canvas.toDataURL("image/jpeg", 0.85);
     setCapturedImageUrl(imageUrl);
 
-    return new File([dataURLtoBlob(imageUrl)], "face.jpg");
+    return new File(
+      [dataURLtoBlob(imageUrl)],
+      "face-capture.jpg",
+      { type: "image/jpeg" }, // ← explicitly set MIME type
+    );
   };
+  // function dataURLtoBlob(dataurl: string) {
+  //   const arr = dataurl.split(",");
+  //   const mime = arr[0].match(/:(.*?);/)![1];
+  //   const bstr = atob(arr[1]);
+  //   let n = bstr.length;
+  //   const u8arr = new Uint8Array(n);
 
-  function dataURLtoBlob(dataurl: string) {
+  //   while (n--) {
+  //     u8arr[n] = bstr.charCodeAt(n);
+  //   }
+
+  //   return new Blob([u8arr], { type: mime });
+  // }
+
+  function dataURLtoBlob(dataurl: string): Blob {
     const arr = dataurl.split(",");
-    const mime = arr[0].match(/:(.*?);/)![1];
+    const mime = arr[0].match(/:(.*?);/)![1]; // extracts "image/jpeg"
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-
     while (n--) {
       u8arr[n] = bstr.charCodeAt(n);
     }
-
-    return new Blob([u8arr], { type: mime });
+    return new Blob([u8arr], { type: mime }); // ← mime is "image/jpeg"
   }
-
   const handleStartScan = async () => {
     setScanStep("scanning");
     stepStartTimeRef.current = Date.now();

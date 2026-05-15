@@ -70,15 +70,27 @@ export default function OnboardingTermsPage() {
         accountMode: formData.accountMode!,
         howYouFoundUs: formData.howYouFoundUs!,
         isOnboarded: true,
+
+        // 🔥 TEMP TEST: force agent profile
+        ...(formData.accountMode === "AGENT" && {
+          agentProfile: {
+            agencyName: "Test Agency",
+            operatingAreas: ["Lagos"],
+          },
+        }),
+
         ...(formData.accountMode === "HUTTSPOTTER" && {
           intent: formData.intent,
         }),
+
         ...(profilePhotoUrl && { profilePhoto: profilePhotoUrl }),
       });
 
       // Step 3 — Fetch full profile to get accountMode for routing
       setLoadingMessage("Setting up your account...");
       const profile = await getUserProfile();
+
+      console.log("AFTER UPDATE:", profile);
 
       // Step 4 — Clear onboarding data
       reset();

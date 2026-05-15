@@ -1,5 +1,5 @@
 import api from "./api";
-import { RegisterPayload } from "./types";
+import { AccountMode, RegisterPayload } from "./types";
 
 export async function registerUser(payload: RegisterPayload) {
   try {
@@ -21,6 +21,7 @@ export async function loginUser(payload: { email: string; password: string }) {
     token: string;
     isFirstLogin: boolean;
     user: {
+      accountMode: AccountMode;
       id: string;
       name: string;
       email: string;
