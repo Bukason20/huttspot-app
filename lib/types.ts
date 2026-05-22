@@ -137,6 +137,7 @@ export interface ListingStep3Payload {
     toilets: number;
     parkingSpaces: number;
     features: string[];
+    additionalNotes: string | undefined;
   };
 }
 
