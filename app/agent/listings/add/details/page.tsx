@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useListing } from "@/context/ListingContext";
 import { createListingStep3 } from "@/lib/agent";
 import StepHeader from "@/components/agent/StepHeader";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const amenitiesList = [
   "Furnished",
@@ -90,7 +91,6 @@ export default function AddListingStep2() {
         currentStep={2}
         totalSteps={4}
       />
-
       <div className="flex flex-col gap-6 flex-1">
         {/* Bedrooms */}
         <div className="flex flex-col gap-1.5">
@@ -197,17 +197,26 @@ export default function AddListingStep2() {
         {error && <p className="text-red-500 text-xs text-center">{error}</p>}
       </div>
 
-      <button
-        onClick={handleContinue}
-        disabled={!isValid || loading}
-        className={`w-full rounded-full py-4 text-[15px] font-semibold mt-8 transition-all duration-200 ${
-          isValid && !loading
-            ? "bg-secondary text-white cursor-pointer"
-            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-        }`}
-      >
-        {loading ? "Saving..." : "Continue"}
-      </button>
+      <div className="flex items-center justify-between gap-3 mt-8">
+        <button
+          onClick={() => router.push("/agent/listings/add")}
+          className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer flex-shrink-0"
+        >
+          <ChevronLeft size={22} className="text-gray-500" />
+        </button>
+        <button
+          onClick={handleContinue}
+          disabled={!isValid || loading}
+          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 ${
+            isValid && !loading
+              ? "bg-secondary text-white cursor-pointer"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          {/* {loading ? "Saving..." : "Continue"} */}
+          <ChevronRight size={22} />
+        </button>
+      </div>
     </div>
   );
 }

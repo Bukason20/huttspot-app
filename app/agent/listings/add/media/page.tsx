@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CloudUpload, X, Star } from "lucide-react";
+import { CloudUpload, X, Star, ChevronLeft } from "lucide-react";
 import { useListing } from "@/context/ListingContext";
 import { createListingStep4, uploadPropertyMedia } from "@/lib/agent";
 import StepHeader from "@/components/agent/StepHeader";
@@ -248,17 +248,25 @@ export default function AddListingStep4() {
         {error && <p className="text-red-500 text-xs text-center">{error}</p>}
       </div>
 
-      <button
-        onClick={handlePublish}
-        disabled={!canPublish || loading}
-        className={`w-full rounded-full py-4 text-[15px] font-semibold mt-8 transition-all duration-200 ${
-          canPublish && !loading
-            ? "bg-secondary text-white cursor-pointer"
-            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-        }`}
-      >
-        {loading ? loadingMessage : "Publish Listing"}
-      </button>
+      <div className="flex items-center justify-between mt-8">
+        <button
+          onClick={() => router.push("/agent/listings/add/location")}
+          className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer flex-shrink-0"
+        >
+          <ChevronLeft size={22} className="text-gray-500" />
+        </button>
+        <button
+          onClick={handlePublish}
+          disabled={!canPublish || loading}
+          className={`rounded-full py-4 px-6  text-[15px] font-semibold transition-all duration-200 ${
+            canPublish && !loading
+              ? "bg-secondary text-white cursor-pointer"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          {loading ? loadingMessage : "Publish Listing"}
+        </button>
+      </div>
     </div>
   );
 }

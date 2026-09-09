@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useListing } from "@/context/ListingContext";
-import { createListingStep1 } from "@/lib/agent";
+import { createListingStep1, updateListingStep1 } from "@/lib/agent";
 import StepHeader from "@/components/agent/StepHeader";
 import { PropertyPurpose, PaymentType } from "@/lib/types";
 
@@ -28,7 +28,7 @@ const listingOptions: { value: PropertyPurpose; label: string }[] = [
 const paymentOptions: { value: PaymentType; label: string }[] = [
   { value: "Monthly", label: "Monthly" },
   { value: "Yearly", label: "Yearly" },
-  { value: "One-Time", label: "One-Time" },
+  { value: "One-time", label: "One-Time" },
 ];
 
 export default function AddListingStep1() {
@@ -49,6 +49,7 @@ export default function AddListingStep1() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const isResume = !!formData.propertyId; // ← true when resuming a draft
   const isValid =
     propertyName.trim() !== "" && propertyType !== "" && price.trim() !== "";
 
@@ -58,28 +59,48 @@ export default function AddListingStep1() {
     setError("");
 
     try {
-      // Update handleContinue payload
-      const res = await createListingStep1({
-        step: 1,
-        data: {
-          title: propertyName.trim(),
-          type: propertyType,
-          purpose: listingFor,
-          listingType, // ← add this
-          price: parseFloat(price),
+      if (isResume) {
+        // Resuming — update existing draft, don't create new
+        await updateListingStep1(formData.propertyId!, {
+          step: 1,
+          data: {
+            title: propertyName.trim(),
+            type: propertyType,
+            purpose: listingFor,
+            listingType,
+            price: parseFloat(price),
+            paymentType,
+          },
+        });
+        setFormData({
+          propertyName,
+          propertyType,
+          listingFor,
+          price,
           paymentType,
-        },
-      });
-
-      // Save all form data + propertyId returned from backend
-      setFormData({
-        propertyName,
-        propertyType,
-        listingFor,
-        price,
-        paymentType,
-        propertyId: res.property._id, // ← critical: needed for all next steps
-      });
+        });
+      } else {
+        // Brand new listing
+        const res = await createListingStep1({
+          step: 1,
+          data: {
+            title: propertyName.trim(),
+            type: propertyType,
+            purpose: listingFor,
+            listingType,
+            price: parseFloat(price),
+            paymentType,
+          },
+        });
+        setFormData({
+          propertyName,
+          propertyType,
+          listingFor,
+          price,
+          paymentType,
+          propertyId: res.propertyId, // ← save new ID
+        });
+      }
 
       router.push("/agent/listings/add/details");
     } catch (err: any) {
@@ -91,7 +112,11 @@ export default function AddListingStep1() {
 
   return (
     <div className="min-h-screen bg-white px-6 pt-12 pb-10 flex flex-col">
-      <StepHeader title="Upload New Listing" currentStep={1} totalSteps={4} />
+      <StepHeader
+        title={isResume ? "Resume Listing" : "Upload New Listing"}
+        currentStep={1}
+        totalSteps={4}
+      />
 
       <div className="flex flex-col gap-6 flex-1">
         {/* Property Name */}
@@ -150,7 +175,7 @@ export default function AddListingStep1() {
               <button
                 key={option.value}
                 onClick={() => setListingFor(option.value)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                className={`px-5 py-2.5 rounded-full text-sm font-medium cursor-pointer transition-all ${
                   listingFor === option.value
                     ? "bg-secondary text-white"
                     : "bg-white text-gray-500 border border-gray-200"
@@ -175,7 +200,7 @@ export default function AddListingStep1() {
               <button
                 key={option.value}
                 onClick={() => setListingType(option.value)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                className={`px-5 py-2.5 rounded-full text-sm font-medium cursor-pointer transition-all ${
                   listingType === option.value
                     ? "bg-secondary text-white"
                     : "bg-white text-gray-500 border border-gray-200"
@@ -186,6 +211,7 @@ export default function AddListingStep1() {
             ))}
           </div>
         </div>
+
         {/* Pricing */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-[#1a1a1a]">Pricing</label>
@@ -213,7 +239,7 @@ export default function AddListingStep1() {
               <button
                 key={option.value}
                 onClick={() => setPaymentType(option.value)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 ${
+                className={`px-5 py-2.5 rounded-full text-sm font-medium cursor-pointer transition-all ${
                   paymentType === option.value
                     ? "bg-secondary text-white"
                     : "bg-white text-gray-500 border border-gray-200"
@@ -231,7 +257,7 @@ export default function AddListingStep1() {
       <button
         onClick={handleContinue}
         disabled={!isValid || loading}
-        className={`w-full rounded-full py-4 text-[15px] font-semibold mt-8 transition-all duration-200 ${
+        className={`w-full rounded-full py-4 text-[15px] font-semibold mt-8 transition-all ${
           isValid && !loading
             ? "bg-secondary text-white cursor-pointer"
             : "bg-gray-200 text-gray-400 cursor-not-allowed"

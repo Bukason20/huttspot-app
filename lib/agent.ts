@@ -9,7 +9,6 @@ import {
 
 const CREATE_ENDPOINT = "/api/agent/property/create";
 
-// ── Response type shared across all steps ────────────────────
 interface StepResponse {
   message: string;
   propertyId: string;
@@ -18,7 +17,7 @@ interface StepResponse {
   property: PropertyResponse;
 }
 
-// ── Step 1: Basic Info — creates new draft ────────────────────
+// ── Step 1: Basic Info ────────────────────────────────────────
 export async function createListingStep1(
   payload: ListingStep1Payload,
 ): Promise<StepResponse> {
@@ -34,7 +33,7 @@ export async function createListingStep2(
   return response.data;
 }
 
-// ── Step 3: Details & Features ────────────────────────────────
+// ── Step 3: Details ───────────────────────────────────────────
 export async function createListingStep3(
   payload: ListingStep3Payload,
 ): Promise<StepResponse> {
@@ -42,7 +41,7 @@ export async function createListingStep3(
   return response.data;
 }
 
-// ── Step 4: Media & Publish ───────────────────────────────────
+// ── Step 4: Media + Publish ───────────────────────────────────
 export async function createListingStep4(
   payload: ListingStep4Payload,
 ): Promise<StepResponse & { missingFields?: string[] }> {
@@ -50,23 +49,61 @@ export async function createListingStep4(
   return response.data;
 }
 
-// ── Upload property media (photos + video) ────────────────────
-// Call this BEFORE step 4. Send the returned URLs in step 4 data.
+// ── Update existing property (for edit flow) ──────────────────
+// Uses same endpoint but always sends propertyId so backend
+// updates instead of creating new
+export async function updateListingStep1(
+  propertyId: string,
+  payload: ListingStep1Payload,
+): Promise<StepResponse> {
+  const response = await api.post(CREATE_ENDPOINT, {
+    ...payload,
+    propertyId, // ← tells backend to update, not create
+  });
+  return response.data;
+}
+
+export async function updateListingStep2(
+  propertyId: string,
+  payload: Omit<ListingStep2Payload, "propertyId">,
+): Promise<StepResponse> {
+  const response = await api.post(CREATE_ENDPOINT, {
+    ...payload,
+    propertyId,
+  });
+  return response.data;
+}
+
+export async function updateListingStep3(
+  propertyId: string,
+  payload: Omit<ListingStep3Payload, "propertyId">,
+): Promise<StepResponse> {
+  const response = await api.post(CREATE_ENDPOINT, {
+    ...payload,
+    propertyId,
+  });
+  return response.data;
+}
+
+export async function updateListingStep4(
+  propertyId: string,
+  payload: Omit<ListingStep4Payload, "propertyId">,
+): Promise<StepResponse> {
+  const response = await api.post(CREATE_ENDPOINT, {
+    ...payload,
+    propertyId,
+  });
+  return response.data;
+}
+
+// ── Upload property media ─────────────────────────────────────
 export async function uploadPropertyMedia(
   photos: File[],
   video?: File,
 ): Promise<{ photos: string[]; video?: string }> {
   const formData = new FormData();
-
-  // Append each photo under the "photos" field
-  photos.forEach((photo) => {
-    formData.append("photos", photo);
-  });
-
-  // Append video if provided
-  if (video) {
-    formData.append("video", video);
-  }
+  photos.forEach((photo) => formData.append("photos", photo));
+  if (video) formData.append("video", video);
 
   const response = await api.post<{
     message: string;
@@ -76,22 +113,18 @@ export async function uploadPropertyMedia(
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-  return {
-    photos: response.data.photos,
-    video: response.data.video,
-  };
+  return { photos: response.data.photos, video: response.data.video };
 }
 
-// ── Get all agent properties (dashboard) ─────────────────────
+// ── Get all agent properties ──────────────────────────────────
 export async function getAgentProperties(): Promise<{
   properties: PropertyResponse[];
 }> {
-  // Updated to the correct endpoint based on your Swagger docs
   const response = await api.get("/api/agent/property/my-properties");
   return response.data;
 }
 
-// ── Get single property (resume draft) ───────────────────────
+// ── Get single property ───────────────────────────────────────
 export async function getPropertyById(
   propertyId: string,
 ): Promise<{ property: PropertyResponse }> {

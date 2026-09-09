@@ -5,6 +5,7 @@ import { BottomNav, SideNav } from "@/components/agent";
 import { Menu } from "lucide-react";
 import { logo } from "@/assets";
 import { UserProvider, useUser } from "@/context/UserContext";
+import { ListingProvider } from "@/context/ListingContext";
 
 // Inner layout that has access to UserContext
 function AgentLayoutInner({ children }: { children: React.ReactNode }) {
@@ -56,7 +57,10 @@ export default function AgentLayout({
 }) {
   return (
     <UserProvider>
-      <AgentLayoutInner>{children}</AgentLayoutInner>
+      <ListingProvider>
+        {" "}
+        <AgentLayoutInner>{children}</AgentLayoutInner>
+      </ListingProvider>
     </UserProvider>
   );
 }

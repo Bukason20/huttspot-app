@@ -62,17 +62,15 @@ export interface UserProfile {
 }
 
 export type PropertyType =
-  | "Self-Contained"
-  | "Flat / Apartment"
+  | string
+  | "Apartment"
   | "Duplex"
-  | "Bungalow"
-  | "Shop"
-  | "Office Space"
   | "Land"
-  | "Room";
+  | "Shop"
+  | "Office";
 
 export type PropertyPurpose = "For Rent" | "For Sale" | "Room Share";
-export type PaymentType = "Monthly" | "Yearly" | "One-Time";
+export type PaymentType = "Monthly" | "Yearly" | "One-time";
 
 // What we collect across the 4 steps
 export interface ListingFormData {
@@ -106,11 +104,11 @@ export interface ListingStep1Payload {
   step: 1;
   data: {
     title: string;
-    type: string;
-    purpose: string;
+    type: PropertyType;
+    purpose: PropertyPurpose;
     listingType: "full" | "shared"; // ← required by backend
     price: number;
-    paymentType: string;
+    paymentType: PaymentType;
   };
 }
 
@@ -137,7 +135,7 @@ export interface ListingStep3Payload {
     toilets: number;
     parkingSpaces: number;
     features: string[];
-    additionalNotes: string | undefined;
+    additionalNotes?: string | undefined;
   };
 }
 
@@ -158,9 +156,9 @@ export interface PropertyResponse {
   purpose: string;
   price: number;
   paymentType: string;
+  listingType?: string;
   isPublished: boolean;
-  currentStep?: number; // ← Added this
-  listingType?: string; // ← Added this
+  currentStep?: number;
   location?: {
     state: string;
     city: string;
@@ -178,4 +176,65 @@ export interface PropertyResponse {
     photos: string[];
     video?: string;
   };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Property {
+  _id: string;
+  title: string;
+  type: string;
+  purpose: string;
+  listingType?: string;
+  price: number;
+  paymentType: string;
+  location?: {
+    state: string;
+    city: string;
+    street?: string;
+  };
+  details?: {
+    bedrooms: number;
+    bathrooms: number;
+    toilets: number;
+    parkingSpaces: number;
+    features?: string[];
+  };
+  media?: {
+    photos: string[];
+    video?: string;
+  };
+  agent: {
+    _id: string;
+    name: string;
+    phoneNumber?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaginatedResponse {
+  message: string;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  data: Property[];
+}
+
+export interface ListResponse {
+  message: string;
+  count: number;
+  data: Property[];
+}
+
+export interface FilterParams {
+  city?: string;
+  type?: string;
+  purpose?: string;
+  bedrooms?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  limit?: number;
 }

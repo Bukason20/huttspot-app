@@ -1,6 +1,6 @@
 import { ListingProvider } from "@/context/ListingContext";
 
-export default function AddListingLayout({
+export default function EditListingLayout({
   children,
 }: {
   children: React.ReactNode;
