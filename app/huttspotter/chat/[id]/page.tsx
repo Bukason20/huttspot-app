@@ -1,53 +1,142 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Phone, Smile, Send } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft, Phone, Smile, Send, Loader } from "lucide-react";
+import { getMessages, Message } from "@/lib/chat";
+import { getSocket } from "@/lib/socket";
+import { useUser } from "@/context/UserContext";
 
-const mockMessages = [
-  {
-    id: 1,
-    text: "Hi, is this apartment still available?",
-    sender: "them",
-    time: "10:30",
-  },
-  {
-    id: 2,
-    text: "Yes it is! Would you like to schedule a viewing?",
-    sender: "me",
-    time: "10:32",
-  },
-  {
-    id: 3,
-    text: "That would be great, when are you free?",
-    sender: "them",
-    time: "10:35",
-  },
-  {
-    id: 4,
-    text: "I'm available tomorrow afternoon from 2pm. Does that work for you?",
-    sender: "me",
-    time: "10:36",
-  },
-];
-
-export default function ChatConversationPage() {
+export default function HuttspotterChatConversation() {
   const router = useRouter();
-  const [messages, setMessages] = useState(mockMessages);
-  const [input, setInput] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const params = useParams();
+  const conversationId = params.id as string;
+  const { user } = useUser();
 
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [otherUser, setOtherUser] = useState<{
+    name: string;
+    photo?: string;
+  } | null>(null);
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Load messages + connect socket
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const data = await getMessages(conversationId);
+        setMessages(data);
+      } catch (err) {
+        console.error("Failed to load messages:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMessages();
+
+    const socket = getSocket();
+
+    // Listen for incoming messages
+    socket.on("receiveMessage", (message: Message) => {
+      if (message.conversation === conversationId) {
+        setMessages((prev) => [...prev, message]);
+      }
+    });
+
+    // Listen for typing indicator
+    socket.on(
+      "userTyping",
+      ({
+        conversationId: cId,
+        userId,
+      }: {
+        conversationId: string;
+        userId: string;
+      }) => {
+        if (cId === conversationId && userId !== user?.id) {
+          setOtherUserTyping(true);
+        }
+      },
+    );
+
+    socket.on(
+      "userStopTyping",
+      ({ conversationId: cId }: { conversationId: string }) => {
+        if (cId === conversationId) {
+          setOtherUserTyping(false);
+        }
+      },
+    );
+
+    return () => {
+      socket.off("receiveMessage");
+      socket.off("userTyping");
+      socket.off("userStopTyping");
+    };
+  }, [conversationId, user?.id]);
+
   const handleSend = () => {
     if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: prev.length + 1, text: input.trim(), sender: "me", time: "Now" },
-    ]);
+
+    const socket = getSocket();
+
+    // Optimistically add message to UI
+    const tempMessage: Message = {
+      _id: `temp-${Date.now()}`,
+      conversation: conversationId,
+      sender: user?.id ?? "",
+      text: input.trim(),
+      readBy: [],
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+
+    // Send via socket
+    socket.emit("sendMessage", {
+      receiverId: otherUser ?? "", // ← will be set from conversation data
+      text: input.trim(),
+    });
+
+    // Stop typing indicator
+    socket.emit("stopTyping", { conversationId });
+
     setInput("");
+    setOtherUserTyping(false);
+  };
+
+  const handleTyping = (value: string) => {
+    setInput(value);
+    const socket = getSocket();
+
+    if (!isTyping) {
+      setIsTyping(true);
+      socket.emit("typing", { conversationId });
+    }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      socket.emit("stopTyping", { conversationId });
+    }, 1500);
+  };
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -57,50 +146,99 @@ export default function ChatConversationPage() {
         <button onClick={() => router.back()} className="cursor-pointer">
           <ArrowLeft size={20} />
         </button>
-        <img
-          src="https://randomuser.me/api/portraits/women/12.jpg"
-          alt="Jane"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-        <p className="flex-1 text-base font-bold text-[#1a1a1a]">Jane</p>
-        <button className="cursor-pointer text-gray-400">
-          <Phone size={20} />
-        </button>
+        {otherUser?.photo ? (
+          <img
+            src={otherUser.photo}
+            alt=""
+            className="w-10 h-10 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+            <span className="text-white font-bold text-sm">
+              {otherUser?.name?.charAt(0) ?? "A"}
+            </span>
+          </div>
+        )}
+        <p className="flex-1 text-base font-bold text-[#1a1a1a]">
+          {otherUser?.name ?? "Agent"}
+        </p>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
-        {/* Date pill */}
-        <div className="flex justify-center">
-          <span className="bg-gray-300 text-gray-600 text-xs font-medium px-4 py-1 rounded-full">
-            Today
-          </span>
-        </div>
-
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex items-end gap-2 ${msg.sender === "me" ? "flex-row-reverse" : "flex-row"}`}
-          >
-            {msg.sender === "them" && (
-              <img
-                src="https://randomuser.me/api/portraits/women/12.jpg"
-                alt=""
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-              />
-            )}
-            <div
-              className={`max-w-[70%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                msg.sender === "me"
-                  ? "bg-primary text-white rounded-br-sm"
-                  : "bg-gray-200 text-[#1a1a1a] rounded-bl-sm"
-              }`}
-            >
-              {msg.text}
-            </div>
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader size={24} className="text-secondary animate-spin" />
           </div>
-        ))}
-        <div ref={bottomRef} />
+        ) : (
+          <>
+            {/* Date pill */}
+            <div className="flex justify-center">
+              <span className="bg-gray-300 text-gray-600 text-xs font-medium px-4 py-1 rounded-full">
+                Today
+              </span>
+            </div>
+
+            {messages.map((msg) => {
+              const isMe = msg.sender === user?.id;
+              return (
+                <div
+                  key={msg._id}
+                  className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}
+                >
+                  {!isMe && (
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs font-bold">
+                        {otherUser?.name?.charAt(0) ?? "A"}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1 max-w-[70%]">
+                    <div
+                      className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                        isMe
+                          ? "bg-primary text-white rounded-br-sm"
+                          : "bg-gray-200 text-[#1a1a1a] rounded-bl-sm"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                    <p
+                      className={`text-[10px] text-gray-400 ${isMe ? "text-right" : "text-left"}`}
+                    >
+                      {formatTime(msg.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Typing indicator */}
+            {otherUserTyping && (
+              <div className="flex items-end gap-2">
+                <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-xs font-bold">A</span>
+                </div>
+                <div className="bg-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1 items-center">
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div ref={bottomRef} />
+          </>
+        )}
       </div>
 
       {/* Input */}
@@ -112,7 +250,7 @@ export default function ChatConversationPage() {
           type="text"
           placeholder="Message"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => handleTyping(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm outline-none placeholder:text-gray-400"
         />

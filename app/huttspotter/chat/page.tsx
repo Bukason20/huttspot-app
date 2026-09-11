@@ -1,145 +1,122 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
-
-const activeContacts = [
-  {
-    id: 1,
-    name: "Agent Co",
-    avatar: "https://randomuser.me/api/portraits/men/45.jpg",
-    isOnline: true,
-  },
-  {
-    id: 2,
-    name: "NYSC",
-    avatar: "https://randomuser.me/api/portraits/women/32.jpg",
-    isOnline: true,
-  },
-  {
-    id: 3,
-    name: "Rivers Uni",
-    avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-    isOnline: false,
-  },
-];
-
-const conversations = [
-  {
-    id: 1,
-    name: "Eva Agent",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    lastMessage: "Nice to meet you too",
-    time: "3 min",
-  },
-  {
-    id: 2,
-    name: "Lianan",
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-    lastMessage: "Hi",
-    time: "17 min",
-  },
-  {
-    id: 3,
-    name: "Jane",
-    avatar: "https://randomuser.me/api/portraits/women/12.jpg",
-    lastMessage: "Good morning",
-    time: "40 min",
-  },
-  {
-    id: 4,
-    name: "Veena Agent",
-    avatar: "https://randomuser.me/api/portraits/women/33.jpg",
-    lastMessage: "Hi how are you doing",
-    time: "55 min",
-  },
-  {
-    id: 5,
-    name: "Love",
-    avatar: "https://randomuser.me/api/portraits/women/56.jpg",
-    lastMessage: "Hi how are you doing",
-    time: "Tuesday",
-  },
-  {
-    id: 6,
-    name: "Jennifer",
-    avatar: "https://randomuser.me/api/portraits/women/71.jpg",
-    lastMessage: "I get off work soon",
-    time: "Wednesday",
-  },
-  {
-    id: 7,
-    name: "Queen",
-    avatar: "https://randomuser.me/api/portraits/women/88.jpg",
-    lastMessage: "Hello there",
-    time: "Wednesday",
-  },
-];
+import { Loader, MessageCircle } from "lucide-react";
+import { getConversations, Conversation } from "@/lib/chat";
+import { useUser } from "@/context/UserContext";
 
 export default function HuttspotterChatPage() {
   const router = useRouter();
+  const { user } = useUser();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const data = await getConversations();
+        setConversations(data);
+      } catch (err) {
+        console.error("Failed to fetch conversations:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, []);
+
+  // Format timestamp
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000);
+    if (diffMins < 60) return `${diffMins} min`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hrs ago`;
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    return days[date.getDay()];
+  };
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <div className="px-5 pt-2 pb-4">
         <h1 className="text-2xl font-bold text-[#1a1a1a]">Chat</h1>
       </div>
 
-      {/* Active contacts */}
-      <div className="flex items-center gap-4 px-5 mb-4">
-        {activeContacts.map((contact) => (
-          <button
-            key={contact.id}
-            onClick={() => router.push(`/huttspotter/chat/${contact.id}`)}
-            className="relative cursor-pointer flex-shrink-0"
-          >
-            <div className="w-16 h-16 rounded-full border-2 border-secondary p-0.5">
-              <img
-                src={contact.avatar}
-                alt={contact.name}
-                className="w-full h-full rounded-full object-cover"
-              />
-            </div>
-            {contact.isOnline && (
-              <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-white" />
-            )}
-          </button>
-        ))}
-        <button className="w-16 h-16 rounded-full border-2 border-primary flex items-center justify-center cursor-pointer flex-shrink-0">
-          <Plus size={22} className="text-primary" />
-        </button>
-      </div>
-
       <div className="h-px bg-gray-100 mx-5 mb-2" />
 
-      {/* Conversations */}
-      <div className="flex flex-col">
-        {conversations.map((convo) => (
-          <button
-            key={convo.id}
-            onClick={() => router.push(`/huttspotter/chat/${convo.id}`)}
-            className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 cursor-pointer transition-colors text-left"
-          >
-            <img
-              src={convo.avatar}
-              alt={convo.name}
-              className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className="text-sm font-bold text-[#1a1a1a]">{convo.name}</p>
-                <p className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                  {convo.time}
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader size={28} className="text-secondary animate-spin" />
+        </div>
+      ) : conversations.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <MessageCircle size={28} className="text-gray-400" />
+          </div>
+          <p className="text-gray-400 text-sm">No conversations yet.</p>
+          <p className="text-gray-300 text-xs mt-1">
+            Send an inquiry on a listing to start chatting
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col">
+          {conversations.map((convo) => (
+            <button
+              key={convo._id}
+              onClick={() => router.push(`/huttspotter/chat/${convo._id}`)}
+              className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50 cursor-pointer transition-colors text-left"
+            >
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                {convo.otherParticipant?.profilePhoto ? (
+                  <img
+                    src={convo.otherParticipant.profilePhoto}
+                    alt={convo.otherParticipant.name}
+                    className="w-14 h-14 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
+                    <span className="text-white font-bold">
+                      {convo.otherParticipant?.name?.charAt(0) ?? "A"}
+                    </span>
+                  </div>
+                )}
+                {convo.unreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-white text-[9px] font-bold">
+                      {convo.unreadCount}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className="text-sm font-bold text-[#1a1a1a]">
+                    {convo.otherParticipant?.name ?? "Agent"}
+                  </p>
+                  <p className="text-xs text-gray-400 flex-shrink-0 ml-2">
+                    {formatTime(convo.lastMessageAt)}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 truncate">
+                  {convo.lastMessage}
                 </p>
               </div>
-              <p className="text-xs text-gray-500 truncate">
-                {convo.lastMessage}
-              </p>
-            </div>
-          </button>
-        ))}
-      </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -8,10 +8,13 @@ import {
   Bookmark,
   CheckCircle,
   Loader,
-  Phone,
+  X,
+  Send,
 } from "lucide-react";
-import { getPropertyById, getAllProperties } from "@/lib/properties";
+import { getPropertyById } from "@/lib/properties";
 import { toggleSaveProperty } from "@/lib/userProperties";
+import { sendInquiry } from "@/lib/chat";
+import { getAllProperties } from "@/lib/properties";
 import { Property } from "@/lib/types";
 
 export default function ListingDetailPage() {
@@ -26,6 +29,13 @@ export default function ListingDetailPage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Inquiry modal state
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [inquiryMessage, setInquiryMessage] = useState("");
+  const [sendingInquiry, setSendingInquiry] = useState(false);
+  const [inquirySent, setInquirySent] = useState(false);
+  const [inquiryError, setInquiryError] = useState("");
+
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -34,7 +44,6 @@ export default function ListingDetailPage() {
           getAllProperties({ limit: 4 }),
         ]);
         setListing(detailRes.data);
-        // Exclude current listing from others
         setOtherListings(
           othersRes.data.filter((p) => p._id !== id).slice(0, 3),
         );
@@ -57,6 +66,21 @@ export default function ListingDetailPage() {
       console.error("Failed to toggle save:", err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSendInquiry = async () => {
+    if (!inquiryMessage.trim() || sendingInquiry) return;
+    setSendingInquiry(true);
+    setInquiryError("");
+    try {
+      await sendInquiry(id, inquiryMessage.trim());
+      setInquirySent(true);
+      setInquiryMessage("");
+    } catch (err: any) {
+      setInquiryError(err.message || "Failed to send inquiry. Try again.");
+    } finally {
+      setSendingInquiry(false);
     }
   };
 
@@ -127,15 +151,12 @@ export default function ListingDetailPage() {
       )}
 
       <div className="px-5 pt-3">
-        {/* Title + price */}
         <h1 className="text-xl font-bold text-[#1a1a1a] mb-1">
           {listing.title}
         </h1>
         <p className="text-sm text-gray-500 mb-1">
-          {(listing.location?.street ?? "")
-            ? `${listing.location?.street ?? ""}, `
-            : ""}
-          {listing.location?.city ?? ""}, {listing.location?.state ?? ""}
+          {listing.location?.street ? `${listing.location.street}, ` : ""}
+          {listing.location?.city}, {listing.location?.state}
         </p>
         <p className="text-sm text-gray-500 mb-4">
           Price :{" "}
@@ -147,9 +168,7 @@ export default function ListingDetailPage() {
         {/* CTA buttons */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() =>
-              router.push(`/huttspotter/chat?agentId=${listing.agent._id}`)
-            }
+            onClick={() => setShowInquiryModal(true)}
             className="flex-1 bg-secondary text-white rounded-full py-3 flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer"
           >
             <User size={16} />
@@ -158,7 +177,7 @@ export default function ListingDetailPage() {
           <button
             onClick={handleToggleSave}
             disabled={saving}
-            className="flex-1 rounded-full py-3 flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer border-2 border-secondary text-secondary transition-all"
+            className="flex-1 rounded-full py-3 flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer border-2 border-secondary text-secondary"
           >
             <Bookmark
               size={16}
@@ -169,47 +188,39 @@ export default function ListingDetailPage() {
           </button>
         </div>
 
-        {/* Agent info */}
-        {/* <div className="bg-gray-50 rounded-2xl p-4 flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">
-              {listing.agent.name?.charAt(0) ?? "A"}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#1a1a1a]">
-              {listing.agent.name}
+        {/* Agent info — HIDDEN until inquiry is sent */}
+        <div className="bg-gray-50 rounded-2xl p-4 flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-full bg-gray-300 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-[#1a1a1a]">Agent</p>
+            <p className="text-xs text-gray-400">
+              Send an inquiry to view agent details
             </p>
-            <p className="text-xs text-gray-400">Agent</p>
           </div>
-          <a
-            href={`tel:${listing.agent.phoneNumber}`}
-            className="w-9 h-9 bg-secondary rounded-full flex items-center justify-center cursor-pointer"
-          >
-            <Phone size={15} color="#fff" />
-          </a>
-        </div> */}
-
-        {/* Details chips */}
-        <div className="flex items-center gap-3 mb-5 flex-wrap">
-          {[
-            { label: "Beds", value: listing.details?.bedrooms ?? "" },
-            { label: "Baths", value: listing.details?.bathrooms ?? "" },
-            { label: "Toilets", value: listing.details?.toilets ?? "" },
-            { label: "Parking", value: listing.details?.parkingSpaces ?? "" },
-          ].map(({ label, value }) => (
-            <div
-              key={label}
-              className="bg-secondary/10 rounded-xl px-4 py-2 flex flex-col items-center"
-            >
-              <p className="text-base font-bold text-secondary">{value}</p>
-              <p className="text-xs text-gray-500">{label}</p>
-            </div>
-          ))}
         </div>
 
+        {/* Property details chips */}
+        {listing.details && (
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            {[
+              { label: "Beds", value: listing.details.bedrooms },
+              { label: "Baths", value: listing.details.bathrooms },
+              { label: "Toilets", value: listing.details.toilets },
+              { label: "Parking", value: listing.details.parkingSpaces },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="bg-secondary/10 rounded-xl px-4 py-2 flex flex-col items-center"
+              >
+                <p className="text-base font-bold text-secondary">{value}</p>
+                <p className="text-xs text-gray-500">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Amenities */}
-        {listing.details?.features && listing.details?.features.length > 0 && (
+        {listing.details?.features && listing.details.features.length > 0 && (
           <>
             <h2 className="text-base font-bold text-[#1a1a1a] mb-3">
               Amenities
@@ -256,20 +267,9 @@ export default function ListingDetailPage() {
                     <p className="text-sm font-bold text-[#1a1a1a] mb-3">
                       ₦{l.price.toLocaleString()} / {l.paymentType}
                     </p>
-                    <div className="flex items-center gap-2">
-                      <button className="bg-secondary text-white rounded-full px-4 py-1.5 text-xs font-semibold cursor-pointer">
-                        View
-                      </button>
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await toggleSaveProperty(l._id);
-                        }}
-                        className="border-2 border-secondary text-secondary rounded-full px-4 py-1.5 text-xs font-semibold cursor-pointer"
-                      >
-                        Save
-                      </button>
-                    </div>
+                    <button className="bg-secondary text-white rounded-full px-4 py-1.5 text-xs font-semibold cursor-pointer">
+                      View
+                    </button>
                   </div>
                 </div>
               ))}
@@ -277,6 +277,91 @@ export default function ListingDetailPage() {
           </>
         )}
       </div>
+
+      {/* Inquiry Modal */}
+      {showInquiryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+          <div className="bg-white w-full rounded-t-3xl px-6 pt-6 pb-10">
+            {/* Handle */}
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+
+            {!inquirySent ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-[#1a1a1a]">
+                      Contact Agent
+                    </h2>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      About: {listing.title}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowInquiryModal(false)}
+                    className="cursor-pointer text-gray-400"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-400 bg-gray-50 rounded-xl p-3 mb-4">
+                  Your contact details will be shared with the agent only after
+                  they respond to your inquiry.
+                </p>
+
+                <textarea
+                  value={inquiryMessage}
+                  onChange={(e) => setInquiryMessage(e.target.value)}
+                  placeholder="Hi, I'm interested in this property. Is it still available?"
+                  rows={4}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none placeholder:text-gray-300 resize-none mb-3"
+                />
+
+                {inquiryError && (
+                  <p className="text-red-500 text-xs mb-3">{inquiryError}</p>
+                )}
+
+                <button
+                  onClick={handleSendInquiry}
+                  disabled={!inquiryMessage.trim() || sendingInquiry}
+                  className={`w-full rounded-full py-4 text-[15px] font-semibold flex items-center justify-center gap-2 transition-all ${
+                    inquiryMessage.trim() && !sendingInquiry
+                      ? "bg-secondary text-white cursor-pointer"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  <Send size={16} />
+                  {sendingInquiry ? "Sending..." : "Send Inquiry"}
+                </button>
+              </>
+            ) : (
+              // Success state
+              <div className="flex flex-col items-center text-center py-6">
+                <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mb-4">
+                  <CheckCircle size={32} className="text-secondary" />
+                </div>
+                <h2 className="text-lg font-bold text-[#1a1a1a] mb-2">
+                  Inquiry Sent!
+                </h2>
+                <p className="text-sm text-gray-400 mb-6">
+                  The agent will respond to your inquiry. You'll be notified
+                  when they reply.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowInquiryModal(false);
+                    setInquirySent(false);
+                    router.push("/huttspotter/chat");
+                  }}
+                  className="w-full bg-secondary text-white rounded-full py-3 text-sm font-semibold cursor-pointer"
+                >
+                  View in Chat
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
