@@ -11,7 +11,8 @@ export const heroWavyImg = "/images/HeroWavyImg.svg";
 export const room = "/images/Room.png";
 
 // -----------------  Join Commmunity section-------------------
-export const communityImg = "/images/CommunityImg.png";
+export const communityImg = "/images/HuttspotCommunity.svg";
+export const communityImg2 = "/images/CommunityImg.png";
 export const huttspotLogo = "/images/HuttSpotLogo.svg";
 
 // ---------------------SignIn Page-------------------------------------

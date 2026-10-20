@@ -6,6 +6,7 @@ import { useUser } from "@/context/UserContext";
 import { useListing } from "@/context/ListingContext";
 import { getAgentProperties } from "@/lib/agent";
 import { PropertyResponse } from "@/lib/types";
+import { AgentDashboardSkeleton } from "@/components/ui";
 
 // Maps currentStep to the correct resume route
 const getResumeRoute = (currentStep: number) => {
@@ -69,11 +70,7 @@ export default function AgentDashboardPage() {
   };
 
   if (userLoading || listingsLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="w-8 h-8 rounded-full border-4 border-secondary border-t-transparent animate-spin" />
-      </div>
-    );
+    return <AgentDashboardSkeleton />;
   }
 
   const activeListingsCount = listings.filter((l) => l.isPublished).length;

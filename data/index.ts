@@ -1,7 +1,7 @@
 import { room } from "@/assets";
 
 export interface Listing {
-  id: number;
+  _id: number;
   image: string;
   uploadedTime: string;
   isFavorite: boolean;
@@ -11,37 +11,37 @@ export interface Listing {
 
 export const listings: Listing[] = [
   {
-    id: 1,
+    _id: 1,
     image: room,
     uploadedTime: "Uploaded 6hrs ago",
     isFavorite: false,
   },
   {
-    id: 2,
+    _id: 2,
     image: room,
     uploadedTime: "Uploaded 6hrs ago",
     isFavorite: false,
   },
   {
-    id: 3,
+    _id: 3,
     image: room,
     uploadedTime: "Uploaded 6hrs ago",
     isFavorite: false,
   },
   {
-    id: 4,
+    _id: 4,
     image: room,
     uploadedTime: "Uploaded 6hrs ago",
     isFavorite: false,
   },
   {
-    id: 5,
+    _id: 5,
     image: room,
     uploadedTime: "Uploaded 6hrs ago",
     isFavorite: false,
   },
   {
-    id: 6,
+    _id: 6,
     image: room,
     uploadedTime: "Uploaded 6hrs ago",
     isFavorite: false,

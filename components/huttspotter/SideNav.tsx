@@ -11,6 +11,7 @@ import {
   X,
   Moon,
   Sun,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -34,6 +35,20 @@ export function HuttspotterSideNav({ isOpen, onClose, user }: SideNavProps) {
   const [isDark, setIsDark] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleLogout = () => {
+    // Clear localStorage
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("accountMode");
+    localStorage.removeItem("huttspot_onboarding");
+
+    // Clear cookie so middleware stops protecting routes
+    document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+
+    onClose();
+    router.push("/auth/signin");
+  };
 
   return (
     <>
@@ -88,6 +103,15 @@ export function HuttspotterSideNav({ isOpen, onClose, user }: SideNavProps) {
               </button>
             );
           })}
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-4 px-6 py-4 text-red-300 hover:bg-white/10 cursor-pointer transition-colors border-b border-white/10 mt-auto"
+          >
+            <LogOut size={20} color="#fca5a5" />
+            <span className="text-sm font-medium">Log out</span>
+          </button>
         </div>
 
         {/* Dark/light toggle */}

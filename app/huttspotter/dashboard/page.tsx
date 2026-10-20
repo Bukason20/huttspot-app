@@ -7,6 +7,7 @@ import { useUser } from "@/context/UserContext";
 import { getAllProperties } from "@/lib/properties";
 import { toggleSaveProperty } from "@/lib/userProperties";
 import { Property } from "@/lib/types";
+import { HuttspotterDashboardSkeleton } from "@/components/ui";
 
 export default function HuttspotterDashboard() {
   const router = useRouter();
@@ -55,6 +56,10 @@ export default function HuttspotterDashboard() {
       (l.location?.state ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
+  if (loading) {
+    return <HuttspotterDashboardSkeleton />;
+  }
+
   return (
     <div className="px-5">
       {/* Search bar */}
@@ -96,11 +101,7 @@ export default function HuttspotterDashboard() {
       </div>
 
       {/* Listings */}
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader size={28} className="text-secondary animate-spin" />
-        </div>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <p className="text-center text-sm text-gray-400 py-10">
           No listings found.
         </p>

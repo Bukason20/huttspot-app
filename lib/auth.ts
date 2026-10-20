@@ -21,7 +21,6 @@ export async function loginUser(payload: { email: string; password: string }) {
     token: string;
     isFirstLogin: boolean;
     user: {
-      accountMode: AccountMode;
       id: string;
       name: string;
       email: string;
@@ -31,9 +30,12 @@ export async function loginUser(payload: { email: string; password: string }) {
 
   const { token, user } = response.data;
 
-  // Save token — required for all subsequent authenticated requests
+  // Save to localStorage
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
+
+  // Also save to cookie so middleware can read it
+  document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
   return response.data;
 }
@@ -56,9 +58,11 @@ export async function googleAuth(idToken: string) {
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
 
+  // Also save to cookie
+  document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+
   return response.data;
 }
-
 export async function verifyEmail(token: string) {
   const response = await api.get<{ message: string }>(
     "/api/auth/verify-email",

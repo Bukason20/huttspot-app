@@ -28,6 +28,7 @@ export default function ListingDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   // Inquiry modal state
   const [showInquiryModal, setShowInquiryModal] = useState(false);
@@ -74,11 +75,13 @@ export default function ListingDetailPage() {
     setSendingInquiry(true);
     setInquiryError("");
     try {
-      await sendInquiry(id, inquiryMessage.trim());
+      const res = await sendInquiry(id, inquiryMessage.trim());
       setInquirySent(true);
       setInquiryMessage("");
+      // Store conversationId so we can navigate straight to it
+      setConversationId(res.conversation._id);
     } catch (err: any) {
-      setInquiryError(err.message || "Failed to send inquiry. Try again.");
+      setInquiryError(err.message || "Failed to send. Try again.");
     } finally {
       setSendingInquiry(false);
     }
@@ -351,11 +354,15 @@ export default function ListingDetailPage() {
                   onClick={() => {
                     setShowInquiryModal(false);
                     setInquirySent(false);
-                    router.push("/huttspotter/chat");
+                    router.push(
+                      conversationId
+                        ? `/huttspotter/chat/${conversationId}`
+                        : "/huttspotter/chat",
+                    );
                   }}
                   className="w-full bg-secondary text-white rounded-full py-3 text-sm font-semibold cursor-pointer"
                 >
-                  View in Chat
+                  {conversationId ? "Open Chat" : "View in Chat"}
                 </button>
               </div>
             )}
