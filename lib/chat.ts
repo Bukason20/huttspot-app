@@ -10,6 +10,7 @@ export interface Participant {
 }
 
 export interface PropertySnapshot {
+  propertyId: string;
   title: string;
   price: number;
   paymentType: string;
@@ -18,32 +19,30 @@ export interface PropertySnapshot {
   city?: string;
 }
 
-export interface ConversationProperty {
-  _id: string;
-  title: string;
-  type: string;
-  price: number;
-  paymentType: string;
-  purpose: string;
-  isPublished: boolean;
-  media?: { photos: string[] };
-  location?: { city: string; state: string };
-}
-
 export interface Conversation {
   _id: string;
   participants: Participant[];
   initiator: string;
-  type: "PROPERTY_INQUIRY" | "DIRECT";
+  awaitingReplyFrom: string;
   status: "PENDING_REPLY" | "ACTIVE" | "ARCHIVED";
-  property?: ConversationProperty | null;
+  property?: {
+    _id: string;
+    title: string;
+    type: string;
+    price: number;
+    paymentType: string;
+    purpose: string;
+    isPublished: boolean;
+    media?: { photos: string[] };
+    location?: { city: string; state: string };
+  } | null;
   propertySnapshot?: PropertySnapshot;
   lastMessage: string;
   lastMessageAt: string;
   lastSender: string;
   unreadCount: number;
-  awaitingMyReply: boolean; // ← I need to reply
-  awaitingTheirReply: boolean; // ← waiting for their reply
+  awaitingMyReply: boolean;
+  awaitingTheirReply: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +53,8 @@ export interface Message {
   sender: string;
   text: string;
   type: "TEXT" | "INQUIRY";
+  property?: string;
+  propertySnapshot?: PropertySnapshot;
   readBy: string[];
   createdAt: string;
   updatedAt: string;
@@ -67,15 +68,13 @@ export interface ConversationMessagesResponse {
 
 export interface InquireResponse {
   message: string;
+  isNewContext: boolean; // true = property context switched
   conversation: Conversation;
   firstMessage: Message;
 }
 
-// ── Helpers ────────────────────────────────────────────────────
+// ── Helper ─────────────────────────────────────────────────────
 
-/**
- * Get the other participant in a conversation (not the current user)
- */
 export function getOtherParticipant(
   conversation: Conversation,
   myUserId: string,
@@ -87,11 +86,10 @@ export function getOtherParticipant(
 
 /**
  * GET /api/chat/conversations
- * Returns ALL conversations — pending inquiries + active chats
- * Filter by type/status for specific views
+ * One row per person. Pass pending=true for agent's pending tab.
  */
 export async function getConversations(params?: {
-  type?: "PROPERTY_INQUIRY" | "DIRECT";
+  pending?: boolean;
   status?: "PENDING_REPLY" | "ACTIVE" | "ARCHIVED";
 }): Promise<Conversation[]> {
   const response = await api.get<Conversation[]>("/api/chat/conversations", {
@@ -102,7 +100,7 @@ export async function getConversations(params?: {
 
 /**
  * GET /api/chat/{conversationId}/messages
- * Returns conversation header + paginated messages
+ * Returns conversation header + paginated messages (oldest → newest)
  */
 export async function getConversationMessages(
   conversationId: string,
@@ -117,7 +115,7 @@ export async function getConversationMessages(
 
 /**
  * POST /api/chat/inquire
- * Send an inquiry about a property — creates or continues a conversation
+ * Send inquiry. isNewContext=true means property context switched.
  */
 export async function sendInquiry(
   propertyId: string,
@@ -132,7 +130,6 @@ export async function sendInquiry(
 
 /**
  * PATCH /api/chat/{conversationId}/read
- * Mark all messages in a conversation as read
  */
 export async function markConversationRead(
   conversationId: string,
@@ -142,7 +139,6 @@ export async function markConversationRead(
 
 /**
  * PATCH /api/chat/{conversationId}/archive
- * Archive a conversation (replaces old dismiss inquiry)
  */
 export async function archiveConversation(
   conversationId: string,

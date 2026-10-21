@@ -78,8 +78,16 @@ export default function ListingDetailPage() {
       const res = await sendInquiry(id, inquiryMessage.trim());
       setInquirySent(true);
       setInquiryMessage("");
-      // Store conversationId so we can navigate straight to it
       setConversationId(res.conversation._id);
+
+      // isNewContext = true means property context switched on existing chat
+      // either way we navigate to the same conversation
+      if (res.isNewContext) {
+        console.log(
+          "Property context switched to:",
+          res.conversation.propertySnapshot?.title,
+        );
+      }
     } catch (err: any) {
       setInquiryError(err.message || "Failed to send. Try again.");
     } finally {

@@ -2,6 +2,7 @@
 
 @theme {
   --font-poppins: var(--font-poppins);
+  --font-nunito: var(--font-nunito);
   --color-primary: #ff6b35;
   --color-secondary: #0a8754;
   --color-tertiary: #505050;
@@ -9,7 +10,6 @@
 }
 * {
   box-sizing: border-box;
-  font-family: var(--font-poppins), sans-serif;
 }
 body {
   overflow-x: hidden;

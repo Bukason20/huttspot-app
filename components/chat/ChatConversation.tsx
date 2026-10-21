@@ -10,20 +10,48 @@ import {
   Conversation,
   Message,
   Participant,
+  PropertySnapshot,
 } from "@/lib/chat";
 import { getSocket } from "@/lib/socket";
 import { useUser } from "@/context/UserContext";
-import { ChatMessagesSkeleton } from "../ui";
+import { ChatMessagesSkeleton } from "@/components/ui";
 
-// Use this component for BOTH huttspotter and agent
-// Pass role via props or detect from user context
 interface ChatConversationProps {
-  backPath: string; // "/huttspotter/chat" or "/agent/chat"
+  backPath: string;
 }
 
-export default function ChatConversationPage({
-  backPath,
-}: ChatConversationProps) {
+// ── Property card shown inside INQUIRY messages ───────────────
+function InquiryPropertyCard({ snapshot }: { snapshot: PropertySnapshot }) {
+  return (
+    <div className="flex items-center gap-2 bg-secondary/10 border border-secondary/20 rounded-xl px-3 py-2 mb-1">
+      {snapshot.coverPhoto ? (
+        <img
+          src={snapshot.coverPhoto}
+          alt=""
+          className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+        />
+      ) : (
+        <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+          <Home size={14} className="text-gray-400" />
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-[#1a1a1a] truncate">
+          {snapshot.title}
+        </p>
+        <p className="text-[10px] text-gray-500">
+          ₦{snapshot.price?.toLocaleString()} / {snapshot.paymentType}
+          {snapshot.city ? ` · ${snapshot.city}` : ""}
+        </p>
+      </div>
+      <span className="text-[9px] text-secondary font-bold bg-secondary/10 px-1.5 py-0.5 rounded-full flex-shrink-0 ml-auto">
+        Inquiry
+      </span>
+    </div>
+  );
+}
+
+export default function ChatConversation({ backPath }: ChatConversationProps) {
   const router = useRouter();
   const params = useParams();
   const conversationId = params.id as string;
@@ -50,15 +78,7 @@ export default function ChatConversationPage({
         const res = await getConversationMessages(conversationId);
         setConversation(res.conversation);
         setMessages(res.messages);
-
-        // Get other participant from populated participants array
-        const otherParticipant = getOtherParticipant(
-          res.conversation,
-          user?.id ?? "",
-        );
-        setOther(otherParticipant);
-
-        // Mark as read
+        setOther(getOtherParticipant(res.conversation, user?.id ?? ""));
         await markConversationRead(conversationId);
       } catch (err) {
         console.error("Failed to load messages:", err);
@@ -71,15 +91,22 @@ export default function ChatConversationPage({
 
     const socket = getSocket();
 
+    // Receive new message
     socket.on("receiveMessage", (message: Message) => {
       if (message.conversation === conversationId) {
         setMessages((prev) => {
-          // Avoid duplicates
           if (prev.some((m) => m._id === message._id)) return prev;
           return [...prev, message];
         });
-        // Mark as read since we're in the chat
         markConversationRead(conversationId).catch(console.error);
+      }
+    });
+
+    // Update conversation header when property context changes
+    // propertySnapshot on the conversation updates when new inquiry arrives
+    socket.on("conversationUpdated", (updatedConvo: Conversation) => {
+      if (updatedConvo._id === conversationId) {
+        setConversation(updatedConvo);
       }
     });
 
@@ -107,6 +134,7 @@ export default function ChatConversationPage({
 
     return () => {
       socket.off("receiveMessage");
+      socket.off("conversationUpdated");
       socket.off("userTyping");
       socket.off("userStopTyping");
     };
@@ -129,9 +157,9 @@ export default function ChatConversationPage({
     };
     setMessages((prev) => [...prev, tempMessage]);
 
-    // Send via socket — receiverId now comes from populated participants
+    // receiverId from populated participants — no mystery
     socket.emit("sendMessage", {
-      receiverId: other._id, // ← no longer a mystery!
+      receiverId: other._id,
       text: input.trim(),
     });
 
@@ -160,9 +188,8 @@ export default function ChatConversationPage({
       minute: "2-digit",
     });
 
-  const isPendingInquiry =
-    conversation?.status === "PENDING_REPLY" &&
-    conversation?.type === "PROPERTY_INQUIRY";
+  // Current property context — always from conversation.propertySnapshot
+  const currentSnapshot = conversation?.propertySnapshot;
 
   return (
     <div className="max-w-[390px] mx-auto h-screen bg-[#f5f5f5] flex flex-col">
@@ -200,12 +227,13 @@ export default function ChatConversationPage({
           </div>
         </div>
 
-        {/* Property context banner */}
-        {conversation?.propertySnapshot && (
-          <div className="flex items-center gap-2 px-4 pb-3">
-            {conversation.propertySnapshot.coverPhoto ? (
+        {/* Property context banner — render from conversation.propertySnapshot */}
+        {/* Only show when propertySnapshot exists — plain chat header if missing */}
+        {currentSnapshot && (
+          <div className="flex items-center gap-2 px-4 pb-3 border-t border-gray-50 pt-2">
+            {currentSnapshot.coverPhoto ? (
               <img
-                src={conversation.propertySnapshot.coverPhoto}
+                src={currentSnapshot.coverPhoto}
                 alt=""
                 className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
               />
@@ -214,17 +242,17 @@ export default function ChatConversationPage({
                 <Home size={14} className="text-gray-400" />
               </div>
             )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-[#1a1a1a] truncate">
-                {conversation.propertySnapshot.title}
+                {currentSnapshot.title}
               </p>
               <p className="text-[10px] text-gray-400">
-                ₦{conversation.propertySnapshot.price?.toLocaleString()} /{" "}
-                {conversation.propertySnapshot.paymentType}
+                ₦{currentSnapshot.price?.toLocaleString()} /{" "}
+                {currentSnapshot.paymentType}
               </p>
             </div>
-            {isPendingInquiry && (
-              <span className="ml-auto text-[9px] text-orange-500 font-bold bg-orange-50 px-2 py-1 rounded-full flex-shrink-0">
+            {conversation?.status === "PENDING_REPLY" && (
+              <span className="text-[9px] text-orange-500 font-bold bg-orange-50 px-2 py-1 rounded-full flex-shrink-0">
                 PENDING
               </span>
             )}
@@ -246,12 +274,11 @@ export default function ChatConversationPage({
 
             {messages.map((msg) => {
               const isMe = msg.sender === user?.id;
+
               return (
                 <div
                   key={msg._id}
-                  className={`flex items-end gap-2 ${
-                    isMe ? "flex-row-reverse" : "flex-row"
-                  }`}
+                  className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}
                 >
                   {!isMe && (
                     <>
@@ -270,7 +297,13 @@ export default function ChatConversationPage({
                       )}
                     </>
                   )}
-                  <div className={`flex flex-col gap-1 max-w-[70%]`}>
+
+                  <div className={`flex flex-col gap-1 max-w-[75%]`}>
+                    {/* INQUIRY messages show property card above text */}
+                    {msg.type === "INQUIRY" && msg.propertySnapshot && (
+                      <InquiryPropertyCard snapshot={msg.propertySnapshot} />
+                    )}
+
                     <div
                       className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                         isMe
@@ -281,9 +314,7 @@ export default function ChatConversationPage({
                       {msg.text}
                     </div>
                     <p
-                      className={`text-[10px] text-gray-400 ${
-                        isMe ? "text-right" : "text-left"
-                      }`}
+                      className={`text-[10px] text-gray-400 ${isMe ? "text-right" : "text-left"}`}
                     >
                       {formatTime(msg.createdAt)}
                     </p>
