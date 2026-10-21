@@ -52,24 +52,21 @@ function SignInContent() {
         password: form.password,
       });
 
-      console.log("LOGIN RESPONSE:", res);
-
       setModalMessage(`Welcome back, ${res.user.name}!`);
       setModal("success");
 
       setTimeout(async () => {
-        try {
-          // 🔥 Confirm from backend (source of truth)
-          const profile = await getUserProfile();
-
-          console.log("LOGIN PROFILE:", profile);
-
-          routeAfterLogin(profile.isOnboarded, profile.accountMode);
-        } catch (err) {
-          console.error("Failed to fetch profile after login:", err);
-
-          // fallback
-          routeAfterLogin(res.user.isOnboarded, res.user.accountMode);
+        if (!res.user.isOnboarded) {
+          router.push("/onboarding");
+        } else {
+          // Fetch profile to get accountMode for routing
+          try {
+            const profile = await getUserProfile();
+            routeAfterLogin(true, profile.accountMode);
+          } catch {
+            // Fallback if profile fetch fails
+            router.push("/");
+          }
         }
       }, 1500);
     } catch (err: any) {
