@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, ChevronRight } from "lucide-react";
+import { Heart, ArrowRight, MapPin, ImageOff } from "lucide-react";
 import { Property } from "@/lib/types";
 
 interface PropertySectionProps {
@@ -47,27 +47,38 @@ export default function PropertySection({
   return (
     <div
       ref={sectionRef}
-      className={`mb-6 transition-all duration-700 ease-out ${
+      className={`mb-10 transition-all duration-700 ease-out ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
       {/* Section header */}
-      <div className="flex items-center justify-between px-5 mb-3">
-        <h2 className="text-sm font-bold text-[#1a1a1a]">{title}</h2>
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h3 className="font-poppins text-lg font-semibold text-[#1a1a1a] sm:text-xl">
+            {title}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {properties.length} {properties.length === 1 ? "listing" : "listings"}
+          </p>
+        </div>
         <button
           onClick={() =>
             router.push(
               `/huttspotter/dashboard?type=${encodeURIComponent(title)}`,
             )
           }
-          className="flex items-center gap-0.5 text-xs text-gray-400 cursor-pointer"
+          className="group flex flex-shrink-0 cursor-pointer items-center gap-1.5 text-sm font-semibold text-secondary"
         >
-          <ChevronRight size={14} />
+          See all
+          <ArrowRight
+            size={15}
+            className="transition-transform group-hover:translate-x-0.5"
+          />
         </button>
       </div>
 
-      {/* Horizontal scroll grid — 3 per row */}
-      <div className="grid grid-cols-3 gap-2 px-5">
+      {/* Horizontal scroller on small screens, grid from lg up */}
+      <div className="scrollbar-hide -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
         {properties.slice(0, 6).map((listing, i) => {
           const coverPhoto = listing.media?.photos?.[0];
           const isSaved = savedIds.includes(listing._id);
@@ -76,7 +87,7 @@ export default function PropertySection({
             <div
               key={listing._id}
               onClick={() => router.push(`/huttspotter/listing/${listing._id}`)}
-              className={`relative rounded-xl overflow-hidden cursor-pointer transition-all duration-500 ease-out ${
+              className={`group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 ease-out hover:border-gray-200 hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-[300px] lg:w-auto ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
@@ -87,50 +98,74 @@ export default function PropertySection({
               }}
             >
               {/* Image */}
-              {coverPhoto ? (
-                <img
-                  src={coverPhoto}
-                  alt={listing.title}
-                  className="w-full h-24 object-cover"
-                />
-              ) : (
-                <div className="w-full h-24 bg-gray-200 flex items-center justify-center">
-                  <span className="text-[10px] text-gray-400">No photo</span>
-                </div>
-              )}
-
-              {/* Heart */}
-              {onSaveToggle && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSaveToggle(listing._id);
-                  }}
-                  className="absolute top-1.5 right-1.5 w-6 h-6 bg-white/85 rounded-full flex items-center justify-center cursor-pointer"
-                >
-                  <Heart
-                    size={11}
-                    fill={isSaved ? "#e8622a" : "none"}
-                    color={isSaved ? "#e8622a" : "#374151"}
+              <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                {coverPhoto ? (
+                  <img
+                    src={coverPhoto}
+                    alt={listing.title}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
-                </button>
-              )}
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-gray-400">
+                    <ImageOff size={20} />
+                    <span className="text-xs">No photo</span>
+                  </div>
+                )}
 
-              {/* Time badge */}
-              <div className="absolute bottom-8 left-1 bg-black/40 rounded-full px-1.5 py-0.5">
-                <p className="text-white text-[8px] font-medium">
-                  {listing.location?.city ?? ""}
-                </p>
+                {/* Heart */}
+                {onSaveToggle && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSaveToggle(listing._id);
+                    }}
+                    aria-label={isSaved ? "Remove from saved" : "Save listing"}
+                    className="heart-btn absolute right-3 top-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white"
+                  >
+                    <Heart
+                      size={16}
+                      fill={isSaved ? "#ff6b35" : "none"}
+                      color={isSaved ? "#ff6b35" : "#1a1a1a"}
+                    />
+                  </button>
+                )}
+
+                {/* Purpose chip */}
+                {listing.purpose && (
+                  <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-[#1a1a1a]">
+                    {listing.purpose}
+                  </span>
+                )}
               </div>
 
-              {/* View listing button */}
-              <div className="pt-1 pb-1">
-                <p className="text-[9px] text-gray-400 font-medium mb-0.5">
-                  ₦{listing.price?.toLocaleString()} / {listing.paymentType}
+              {/* Info */}
+              <div className="p-4">
+                <p className="line-clamp-1 font-semibold text-[#1a1a1a]">
+                  {listing.title}
                 </p>
-                <button className="bg-secondary text-white rounded-full px-2 py-1 text-[9px] font-semibold cursor-pointer">
-                  View Listing
-                </button>
+                {listing.location?.city && (
+                  <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
+                    <MapPin size={13} className="flex-shrink-0" />
+                    <span className="truncate">
+                      {listing.location.city}
+                      {listing.location.state
+                        ? `, ${listing.location.state}`
+                        : ""}
+                    </span>
+                  </p>
+                )}
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                  <p className="font-poppins text-base font-semibold text-[#1a1a1a]">
+                    ₦{listing.price?.toLocaleString()}
+                    <span className="font-nunito text-xs font-semibold text-gray-500">
+                      {" "}
+                      / {listing.paymentType}
+                    </span>
+                  </p>
+                  <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-white transition-colors group-hover:bg-[#08744a]">
+                    View
+                  </span>
+                </div>
               </div>
             </div>
           );

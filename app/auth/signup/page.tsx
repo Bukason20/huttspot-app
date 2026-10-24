@@ -7,6 +7,11 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { registerUser, googleAuth } from "@/lib/auth";
 import { useOnboarding } from "@/context/OnboardingContext";
+import AuthShell, {
+  authInputClass,
+  authLabelClass,
+} from "@/components/ui/AuthShell";
+import { authImg2 } from "@/assets";
 
 interface GoogleTokenPayload {
   name: string;
@@ -111,127 +116,156 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 pt-12">
-      <button onClick={() => router.back()} className="cursor-pointer mb-8">
-        ←
-      </button>
-
-      <h1 className="text-3xl font-bold text-center mb-10">
-        Sign<span className="text-primary">Up</span>
-      </h1>
-
+    <AuthShell
+      title={
+        <>
+          Create your <span className="text-primary">account</span>
+        </>
+      }
+      subtitle="Join HuttSpot to find homes, shops and roommates in PH."
+      image={authImg2}
+      tone="primary"
+      panelHeading="Moving to PH? Start your search here."
+      panelText="Corpers, students, families and small businesses — connect with trusted agents and real people."
+    >
       <div className="flex flex-col gap-5">
         {/* Name */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="name" className={authLabelClass}>
             Full Name
           </label>
           <input
+            id="name"
             type="text"
             placeholder="John Doe"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full bg-gray-200 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-400"
+            className={authInputClass}
           />
         </div>
 
         {/* Email */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email" className={authLabelClass}>
             E-mail Address
           </label>
           <input
+            id="email"
             type="email"
             placeholder="example@gmail.com"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full bg-gray-200 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-400"
+            className={authInputClass}
           />
         </div>
 
-        {/* Password */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••••"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full bg-gray-200 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-400 pr-12"
-            />
-            <button
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+        <div className="grid gap-5 sm:grid-cols-2 sm:gap-4">
+          {/* Password */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="password" className={authLabelClass}>
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className={`${authInputClass} pr-12`}
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="confirmPassword" className={authLabelClass}>
+              Confirm Password
+            </label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={form.confirmPassword}
+                onChange={(e) =>
+                  setForm({ ...form, confirmPassword: e.target.value })
+                }
+                className={`${authInputClass} pr-12`}
+              />
+              <button
+                type="button"
+                aria-label={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
         </div>
+        <p className="-mt-2 text-xs text-gray-500">
+          Use at least 6 characters.
+        </p>
 
-        {/* Confirm Password */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">
-            Confirm Password
-          </label>
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="••••••••••"
-              value={form.confirmPassword}
-              onChange={(e) =>
-                setForm({ ...form, confirmPassword: e.target.value })
-              }
-              className="w-full bg-gray-200 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-400 pr-12"
-            />
-            <button
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
-            >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-        </div>
-
-        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+        {error && (
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-600">
+            {error}
+          </p>
+        )}
 
         <button
           onClick={handleSignUp}
           disabled={!isValid || loading}
-          className={`w-full rounded-full py-4 text-[15px] font-semibold mt-2 transition-all duration-200 ${
+          className={`h-12 w-full rounded-full text-[15px] font-semibold transition-colors duration-200 ${
             isValid && !loading
-              ? "bg-secondary text-white cursor-pointer"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
+              : "cursor-not-allowed bg-gray-100 text-gray-400"
           }`}
         >
           {loading ? "Creating account..." : "Sign up"}
         </button>
 
-        <div className="flex flex-col items-center gap-4 mt-2">
-          <p className="text-sm text-gray-500">Or Continue with</p>
-          <div className="w-full [&>div]:w-full [&>div>div]:w-full [&_iframe]:w-full">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => console.error("Google login failed")}
-              useOneTap={false}
-              theme="outline"
-              size="large"
-              text="signup_with"
-              shape="pill"
-              width="350"
-            />
-          </div>
-          <p className="text-sm text-gray-500">
-            Already have an Account?{" "}
-            <button
-              onClick={() => router.push("/auth/signin")}
-              className="text-primary font-bold cursor-pointer"
-            >
-              Sign in
-            </button>
-          </p>
+        {/* Divider */}
+        <div className="flex items-center gap-4">
+          <span className="h-px flex-1 bg-gray-200" />
+          <p className="text-sm text-gray-500">Or continue with</p>
+          <span className="h-px flex-1 bg-gray-200" />
         </div>
+
+        <div className="flex w-full justify-center [&>div]:w-full [&>div>div]:w-full [&_iframe]:mx-auto">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => console.error("Google login failed")}
+            useOneTap={false}
+            theme="outline"
+            size="large"
+            text="signup_with"
+            shape="pill"
+            width="350"
+          />
+        </div>
+
+        <p className="mt-2 text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <button
+            onClick={() => router.push("/auth/signin")}
+            className="cursor-pointer font-bold text-primary hover:underline"
+          >
+            Sign in
+          </button>
+        </p>
       </div>
-    </div>
+    </AuthShell>
   );
 }

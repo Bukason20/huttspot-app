@@ -8,6 +8,11 @@ import { loginUser, googleAuth } from "@/lib/auth";
 import { getUserProfile } from "@/lib/user";
 import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
 import { jwtDecode } from "jwt-decode";
+import AuthShell, {
+  authInputClass,
+  authLabelClass,
+} from "@/components/ui/AuthShell";
+import { authImg3 } from "@/assets";
 
 interface GoogleTokenPayload {
   name: string;
@@ -134,134 +139,147 @@ function SignInContent() {
   };
 
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 pt-12">
-      <button onClick={() => router.back()} className="cursor-pointer mb-8">
-        ←
-      </button>
-
-      <h1 className="text-3xl font-bold text-center mb-10">
-        Sign<span className="text-primary">In</span>
-      </h1>
-
+    <AuthShell
+      title={
+        <>
+          Welcome <span className="text-primary">back</span>
+        </>
+      }
+      subtitle="Sign in to continue your search on HuttSpot."
+      image={authImg3}
+      tone="secondary"
+      panelHeading="Your next spot is a few taps away."
+      panelText="Pick up where you left off — saved listings, chats with agents and more."
+    >
       <div className="flex flex-col gap-5">
         {/* Email */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="email" className={authLabelClass}>
             E-mail Address
           </label>
           <input
+            id="email"
             type="email"
             placeholder="example@gmail.com"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full bg-gray-200 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-400"
+            className={authInputClass}
           />
         </div>
 
         {/* Password */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a">Password</label>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className={authLabelClass}>
+              Password
+            </label>
+            <button className="cursor-pointer text-sm font-semibold text-secondary hover:underline">
+              Forgot Password?
+            </button>
+          </div>
           <div className="relative">
             <input
+              id="password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••••"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full bg-gray-200 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-400 pr-12"
+              className={`${authInputClass} pr-12`}
             />
             <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+              className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:text-gray-600"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
         </div>
 
-        {/* Remember me + Forgot password */}
-        <div className="flex items-center justify-between">
-          <button className="text-sm text-[#1a1a1a] cursor-pointer">
-            Forgot Password?
-          </button>
-        </div>
-
         {/* Sign in button */}
         <button
           onClick={handleSignIn}
           disabled={!isValid || loading}
-          className={`w-full rounded-full py-4 text-[15px] font-semibold mt-2 transition-all duration-200 ${
+          className={`mt-2 h-12 w-full rounded-full text-[15px] font-semibold transition-colors duration-200 ${
             isValid && !loading
-              ? "bg-secondary text-white cursor-pointer"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
+              : "cursor-not-allowed bg-gray-100 text-gray-400"
           }`}
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
 
-        {/* Google */}
-        <div className="flex flex-col items-center gap-4 mt-2">
-          <p className="text-sm text-gray-500">Or Continue with</p>
-          <div className="w-full [&>div]:w-full [&>div>div]:w-full [&_iframe]:w-full">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => console.error("Google login failed")}
-              useOneTap={false}
-              theme="outline"
-              size="large"
-              text="signin_with"
-              shape="pill"
-              width="350"
-            />
-          </div>
-          <p className="text-sm text-gray-500">
-            Don't have an Account?{" "}
-            <button
-              onClick={() => router.push("/auth/signup")}
-              className="text-primary font-bold cursor-pointer"
-            >
-              Create account
-            </button>
-          </p>
+        {/* Divider */}
+        <div className="flex items-center gap-4">
+          <span className="h-px flex-1 bg-gray-200" />
+          <p className="text-sm text-gray-500">Or continue with</p>
+          <span className="h-px flex-1 bg-gray-200" />
         </div>
+
+        {/* Google */}
+        <div className="flex w-full justify-center [&>div]:w-full [&>div>div]:w-full [&_iframe]:mx-auto">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => console.error("Google login failed")}
+            useOneTap={false}
+            theme="outline"
+            size="large"
+            text="signin_with"
+            shape="pill"
+            width="350"
+          />
+        </div>
+
+        <p className="mt-2 text-center text-sm text-gray-500">
+          Don&apos;t have an account?{" "}
+          <button
+            onClick={() => router.push("/auth/signup")}
+            className="cursor-pointer font-bold text-primary hover:underline"
+          >
+            Create account
+          </button>
+        </p>
       </div>
 
       {/* Modal */}
       {modal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
-          <div className="relative bg-white rounded-3xl p-6 w-full max-w-[340px] flex flex-col items-center text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
+          <div className="relative flex w-full max-w-[380px] flex-col items-center rounded-3xl bg-white p-8 text-center">
             <button
               onClick={() => setModal(null)}
-              className="absolute top-4 right-4 cursor-pointer text-gray-400"
+              aria-label="Close"
+              className="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
             <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                modal === "success" ? "bg-secondary/10" : "bg-red-100"
+              className={`mb-5 flex h-16 w-16 items-center justify-center rounded-full ${
+                modal === "success" ? "bg-secondary/10" : "bg-red-50"
               }`}
             >
               {modal === "success" ? (
-                <CheckCircle size={32} className="text-secondary" />
+                <CheckCircle size={30} className="text-secondary" />
               ) : (
-                <XCircle size={32} className="text-red-500" />
+                <XCircle size={30} className="text-red-500" />
               )}
             </div>
-            <h2 className="text-lg font-bold text-[#1a1a1a] mb-2">
+            <h2 className="mb-2 font-poppins text-xl font-semibold text-[#1a1a1a]">
               {modal === "success" ? "Login Successful!" : "Login Failed"}
             </h2>
-            <p className="text-sm text-gray-500 leading-relaxed mb-6">
+            <p className="mb-7 text-sm leading-relaxed text-gray-500">
               {modalMessage}
             </p>
             <button
               onClick={() => setModal(null)}
-              className="w-full bg-secondary text-white rounded-full py-3 text-sm font-semibold cursor-pointer"
+              className="h-12 w-full cursor-pointer rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a]"
             >
               {modal === "success" ? "Continue" : "Try again"}
             </button>
           </div>
         </div>
       )}
-    </div>
+    </AuthShell>
   );
 }
 
