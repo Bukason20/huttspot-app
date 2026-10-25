@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, BadgeCheck, Check } from "lucide-react";
 import { heroAgent, heroClient, heroPortrait } from "@/assets";
 
@@ -9,6 +9,39 @@ const HIGHLIGHTS = ["Verified agents", "Apartments & shops", "Roommate matching"
 
 const HeroSection = () => {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [accountMode, setAccountMode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const mode = localStorage.getItem("accountMode");
+    setIsLoggedIn(!!token);
+    setAccountMode(mode);
+    setChecking(false);
+  }, []);
+
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      // Already logged in — go to their dashboard
+      router.push(
+        accountMode === "AGENT" ? "/agent/dashboard" : "/huttspotter/dashboard",
+      );
+    } else {
+      router.push("/auth/signup");
+    }
+  };
+
+  const handleBecomeAgent = () => {
+    if (isLoggedIn) {
+      router.push(
+        accountMode === "AGENT" ? "/agent/dashboard" : "/huttspotter/dashboard",
+      );
+    } else {
+      router.push("/auth/signup");
+    }
+  };
+
   return (
     <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
       {/* ── Copy ─────────────────────────────────────────── */}
@@ -30,8 +63,9 @@ const HeroSection = () => {
 
         <div className="hero-btns mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center lg:justify-start">
           <button
-            onClick={() => router.push("/auth?mode=signup")}
-            className="group inline-flex h-12 cursor-pointer items-center justify-center gap-3 rounded-full bg-secondary pl-6 pr-2 text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
+            onClick={handleGetStarted}
+            disabled={checking}
+            className="group inline-flex h-12 cursor-pointer disabled:opacity-70 items-center justify-center gap-3 rounded-full bg-secondary pl-6 pr-2 text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
           >
             Get started
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-secondary transition-transform group-hover:translate-x-0.5">
@@ -39,8 +73,9 @@ const HeroSection = () => {
             </span>
           </button>
           <button
-            onClick={() => router.push("/auth?mode=signin")}
-            className="inline-flex h-12 cursor-pointer items-center justify-center rounded-full border border-gray-300 px-6 text-[15px] font-semibold text-[#1a1a1a] transition-colors hover:bg-gray-50"
+            onClick={handleBecomeAgent}
+            disabled={checking}
+            className="inline-flex h-12 cursor-pointer disabled:opacity-70 items-center justify-center rounded-full border border-gray-300 px-6 text-[15px] font-semibold text-[#1a1a1a] transition-colors hover:bg-gray-50"
           >
             Become an Agent
           </button>

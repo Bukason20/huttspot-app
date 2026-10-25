@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Heart, ArrowRight, MapPin, ImageOff } from "lucide-react";
+import {
+  Heart,
+  ArrowRight,
+  MapPin,
+  ImageOff,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Property } from "@/lib/types";
 
 interface PropertySectionProps {
@@ -23,6 +30,14 @@ export default function PropertySection({
   const [isVisible, setIsVisible] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
 
+  // Carousel: watch the first & last cards inside the scroller so the
+  // arrow buttons know when we are at either end
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const firstCardRef = useRef<HTMLDivElement>(null);
+  const lastCardRef = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -41,6 +56,29 @@ export default function PropertySection({
 
     return () => observer.disconnect();
   }, [hasAnimated]);
+
+  useEffect(() => {
+    const root = scrollerRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === firstCardRef.current) setAtStart(entry.isIntersecting);
+          if (entry.target === lastCardRef.current) setAtEnd(entry.isIntersecting);
+        });
+      },
+      { root, threshold: 0.9 },
+    );
+    if (firstCardRef.current) observer.observe(firstCardRef.current);
+    if (lastCardRef.current) observer.observe(lastCardRef.current);
+    return () => observer.disconnect();
+  }, [properties.length]);
+
+  const scrollByPage = (dir: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: "smooth" });
+  };
 
   if (properties.length === 0) return null;
 
@@ -61,6 +99,7 @@ export default function PropertySection({
             {properties.length} {properties.length === 1 ? "listing" : "listings"}
           </p>
         </div>
+        <div className="flex flex-shrink-0 items-center gap-4">
         <button
           onClick={() =>
             router.push(
@@ -75,19 +114,47 @@ export default function PropertySection({
             className="transition-transform group-hover:translate-x-0.5"
           />
         </button>
+        {/* Arrows — tablet & desktop, only when there is more to scroll */}
+        {Math.min(properties.length, 6) > 1 && !(atStart && atEnd) && (
+          <div className="hidden items-center gap-2 md:flex">
+            <button
+              onClick={() => scrollByPage(-1)}
+              disabled={atStart}
+              aria-label={`Previous ${title} listings`}
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-[#1a1a1a] transition-colors hover:bg-gray-50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => scrollByPage(1)}
+              disabled={atEnd}
+              aria-label={`Next ${title} listings`}
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-[#1a1a1a] transition-colors hover:bg-gray-50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+        </div>
       </div>
 
-      {/* Horizontal scroller on small screens, grid from lg up */}
-      <div className="scrollbar-hide -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
-        {properties.slice(0, 6).map((listing, i) => {
+      {/* Carousel — swipe on touch, arrows on tablet & desktop */}
+      <div
+        ref={scrollerRef}
+        className="scrollbar-hide -mx-5 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:mx-0 lg:scroll-px-0 lg:px-0"
+      >
+        {properties.slice(0, 6).map((listing, i, shown) => {
           const coverPhoto = listing.media?.photos?.[0];
           const isSaved = savedIds.includes(listing._id);
+          const edgeRef =
+            i === 0 ? firstCardRef : i === shown.length - 1 ? lastCardRef : undefined;
 
           return (
             <div
               key={listing._id}
+              ref={edgeRef}
               onClick={() => router.push(`/huttspotter/listing/${listing._id}`)}
-              className={`group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 ease-out hover:border-gray-200 hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-[300px] lg:w-auto ${
+              className={`group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 ease-out hover:border-gray-200 hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-[300px] lg:w-[calc((100%-2rem)/3)] ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
