@@ -95,6 +95,20 @@ export default function ChatConversation({ backPath }: ChatConversationProps) {
     socket.on("receiveMessage", (message: Message) => {
       if (message.conversation === conversationId) {
         setMessages((prev) => {
+          // If message is from me, replace the optimistic temp message
+          if (message.sender === user?.id) {
+            const hasTempMessage = prev.some((m) => m._id.startsWith("temp-"));
+            if (hasTempMessage) {
+              // Replace the oldest temp message with the confirmed one
+              const firstTempIndex = prev.findIndex((m) =>
+                m._id.startsWith("temp-"),
+              );
+              const updated = [...prev];
+              updated[firstTempIndex] = message;
+              return updated;
+            }
+          }
+          // Avoid duplicates for incoming messages
           if (prev.some((m) => m._id === message._id)) return prev;
           return [...prev, message];
         });
@@ -143,13 +157,15 @@ export default function ChatConversation({ backPath }: ChatConversationProps) {
   const handleSend = () => {
     if (!input.trim() || !other) return;
     const socket = getSocket();
+    const text = input.trim();
 
-    // Optimistic UI
+    // Optimistic message with temp ID
+    const tempId = `temp-${Date.now()}`;
     const tempMessage: Message = {
-      _id: `temp-${Date.now()}`,
+      _id: tempId,
       conversation: conversationId,
       sender: user?.id ?? "",
-      text: input.trim(),
+      text,
       type: "TEXT",
       readBy: [],
       createdAt: new Date().toISOString(),
@@ -157,10 +173,10 @@ export default function ChatConversation({ backPath }: ChatConversationProps) {
     };
     setMessages((prev) => [...prev, tempMessage]);
 
-    // receiverId from populated participants — no mystery
+    // Send via socket
     socket.emit("sendMessage", {
       receiverId: other._id,
-      text: input.trim(),
+      text,
     });
 
     socket.emit("stopTyping", { conversationId });
@@ -194,6 +210,7 @@ export default function ChatConversation({ backPath }: ChatConversationProps) {
   return (
     <div className="max-w-[390px] mx-auto h-screen bg-[#f5f5f5] flex flex-col">
       {/* Header */}
+      {/* Header */}
       <div className="bg-white flex flex-col border-b border-gray-100">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
@@ -203,33 +220,52 @@ export default function ChatConversation({ backPath }: ChatConversationProps) {
             <ArrowLeft size={20} />
           </button>
 
-          {other?.profilePhoto ? (
-            <img
-              src={other.profilePhoto}
-              alt={other.name}
-              className="w-10 h-10 rounded-full object-cover"
-            />
+          {loading ? (
+            // Skeleton for avatar + name while loading
+            <>
+              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className="h-3.5 w-28 bg-gray-200 animate-pulse rounded-full" />
+                <div className="h-2.5 w-16 bg-gray-200 animate-pulse rounded-full" />
+              </div>
+            </>
           ) : (
-            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">
-                {other?.name?.charAt(0) ?? "?"}
-              </span>
-            </div>
+            <>
+              {other?.profilePhoto ? (
+                <img
+                  src={other.profilePhoto}
+                  alt={other.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">
+                    {other?.name?.charAt(0) ?? "?"}
+                  </span>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-bold text-[#1a1a1a] truncate">
+                  {other?.name ?? "..."}
+                </p>
+                <p className="text-[10px] text-gray-400">
+                  {other?.accountMode === "AGENT" ? "Agent" : "Huttspotter"}
+                </p>
+              </div>
+            </>
           )}
-
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-bold text-[#1a1a1a] truncate">
-              {other?.name ?? "..."}
-            </p>
-            <p className="text-[10px] text-gray-400">
-              {other?.accountMode === "AGENT" ? "Agent" : "Huttspotter"}
-            </p>
-          </div>
         </div>
 
-        {/* Property context banner — render from conversation.propertySnapshot */}
-        {/* Only show when propertySnapshot exists — plain chat header if missing */}
-        {currentSnapshot && (
+        {/* Property context banner skeleton */}
+        {loading ? (
+          <div className="flex items-center gap-2 px-4 pb-3 border-t border-gray-50 pt-2 animate-pulse">
+            <div className="w-8 h-8 rounded-lg bg-gray-200 flex-shrink-0" />
+            <div className="flex-1 flex flex-col gap-1.5">
+              <div className="h-3 w-32 bg-gray-200 rounded-full" />
+              <div className="h-2.5 w-20 bg-gray-200 rounded-full" />
+            </div>
+          </div>
+        ) : currentSnapshot ? (
           <div className="flex items-center gap-2 px-4 pb-3 border-t border-gray-50 pt-2">
             {currentSnapshot.coverPhoto ? (
               <img
@@ -257,7 +293,7 @@ export default function ChatConversation({ backPath }: ChatConversationProps) {
               </span>
             )}
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Messages */}

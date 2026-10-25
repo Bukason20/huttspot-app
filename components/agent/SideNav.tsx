@@ -11,8 +11,10 @@ import {
   X,
   Moon,
   Sun,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
+import { disconnectSocket } from "@/lib/socket";
 
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", path: "/agent/dashboard" },
@@ -26,32 +28,36 @@ const navItems = [
 interface SideNavProps {
   isOpen: boolean;
   onClose: () => void;
-  user: {
-    name: string;
-    role: string;
-    avatar?: string;
-  };
+  user: { name: string; role: string; avatar?: string };
 }
 
 export default function SideNav({ isOpen, onClose, user }: SideNavProps) {
   const router = useRouter();
   const [isDark, setIsDark] = useState(false);
 
-  const handleNavigate = (path: string) => {
-    router.push(path);
-    onClose();
-  };
-
   if (!isOpen) return null;
+
+  const handleLogout = () => {
+    // Clear all auth data
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("accountMode");
+    localStorage.removeItem("huttspot_onboarding");
+
+    // Clear cookie
+    document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+
+    // Disconnect socket
+    disconnectSocket();
+
+    onClose();
+    router.push("/auth/signin");
+  };
 
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-
-      {/* Drawer */}
       <div className="fixed top-0 left-0 h-full w-[75%] max-w-[300px] bg-[#9e9e9e]/90 backdrop-blur-sm z-50 flex flex-col">
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 cursor-pointer text-white"
@@ -90,7 +96,10 @@ export default function SideNav({ isOpen, onClose, user }: SideNavProps) {
             return (
               <button
                 key={item.path}
-                onClick={() => handleNavigate(item.path)}
+                onClick={() => {
+                  router.push(item.path);
+                  onClose();
+                }}
                 className="flex items-center gap-4 px-6 py-4 text-white hover:bg-white/10 cursor-pointer transition-colors border-b border-white/10"
               >
                 <Icon size={20} color="#fff" />
@@ -98,30 +107,29 @@ export default function SideNav({ isOpen, onClose, user }: SideNavProps) {
               </button>
             );
           })}
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-4 px-6 py-4 text-red-300 hover:bg-white/10 cursor-pointer transition-colors border-b border-white/10"
+          >
+            <LogOut size={20} color="#fca5a5" />
+            <span className="text-sm font-medium">Log out</span>
+          </button>
         </div>
 
-        {/* Bottom — avatar icon + dark/light toggle */}
+        {/* Dark/light toggle */}
         <div className="px-6 pb-10 flex flex-col gap-4">
-          {/* Profile icon */}
-          <button className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center cursor-pointer">
-            <LayoutGrid size={20} color="#fff" />
-          </button>
-
-          {/* Dark/light toggle */}
           <div className="w-12 bg-white rounded-full flex flex-col items-center py-1 gap-1">
             <button
               onClick={() => setIsDark(true)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all ${
-                isDark ? "bg-secondary" : "bg-transparent"
-              }`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all ${isDark ? "bg-secondary" : "bg-transparent"}`}
             >
               <Moon size={18} color={isDark ? "#fff" : "#9ca3af"} />
             </button>
             <button
               onClick={() => setIsDark(false)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all ${
-                !isDark ? "bg-gray-100" : "bg-transparent"
-              }`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all ${!isDark ? "bg-gray-100" : "bg-transparent"}`}
             >
               <Sun size={18} color={!isDark ? "#374151" : "#9ca3af"} />
             </button>

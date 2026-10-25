@@ -1,36 +1,65 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React from "react";
+import { useEffect, useState } from "react";
 import { heroAgent, heroClient } from "@/assets";
 
 const HeroSection = () => {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [accountMode, setAccountMode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const mode = localStorage.getItem("accountMode");
+    setIsLoggedIn(!!token);
+    setAccountMode(mode);
+    setChecking(false);
+  }, []);
+
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      // Already logged in — go to their dashboard
+      router.push(
+        accountMode === "AGENT" ? "/agent/dashboard" : "/huttspotter/dashboard",
+      );
+    } else {
+      router.push("/auth/signup");
+    }
+  };
+
+  const handleBecomeAgent = () => {
+    if (isLoggedIn) {
+      router.push(
+        accountMode === "AGENT" ? "/agent/dashboard" : "/huttspotter/dashboard",
+      );
+    } else {
+      router.push("/auth/signup");
+    }
+  };
+
   return (
     <section>
       {/* Chat Bubbles */}
       <div className="relative pt-2 px-5 min-h-[100px]">
-        {/* Left bubble — user */}
-        <div className="bubble-left flex items-end relativew-fit">
+        <div className="bubble-left flex items-end relative w-fit">
           <img
             src={heroClient}
             alt="user"
             className="h-[42px] w-[42px] rounded-[50%] absolute bottom-[-35px] left-[-5px]"
           />
-
           <div className="bg-primary/70 text-black rounded-r-full rounded-tl-full max-w-47 py-2 px-3 text-xs/4">
             Looking for a self con in Port harcourt
           </div>
         </div>
 
-        {/* Right bubble — agent */}
         <div className="bubble-right bubble-left flex items-end relative w-fit ml-auto">
           <img
             src={heroAgent}
             alt="agent"
             className="h-[42px] w-[42px] rounded-[50%] absolute top-[-35px] right-[-5px]"
           />
-
           <div className="bg-secondary/70 text-white rounded-l-full rounded-br-full max-w-47 py-2 px-3 text-xs/4">
             yes, I'm a verified agent Let's connect
           </div>
@@ -52,14 +81,16 @@ const HeroSection = () => {
       {/* CTA Buttons */}
       <div className="hero-btns flex items-center justify-center gap-3 py-6 px-5">
         <button
-          onClick={() => router.push("/auth?mode=signup")}
-          className="cta-primary bg-secondary rounded-full cursor-pointer py-3 px-6 text-white"
+          onClick={handleGetStarted}
+          disabled={checking}
+          className="cta-primary bg-secondary rounded-full cursor-pointer py-3 px-6 text-white disabled:opacity-70"
         >
           Get started
         </button>
         <button
-          onClick={() => router.push("/auth?mode=signin")}
-          className="cta-secondary cursor-pointer rounded-full py-3 px-6 border"
+          onClick={handleBecomeAgent}
+          disabled={checking}
+          className="cta-secondary cursor-pointer rounded-full py-3 px-6 border disabled:opacity-70"
         >
           Become an Agent
         </button>

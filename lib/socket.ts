@@ -17,8 +17,13 @@ export function getSocket(): Socket {
       console.log("✅ Socket connected:", socket?.id);
     });
 
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
+    });
+
     socket.on("disconnect", () => {
       console.log("❌ Socket disconnected");
+      socket = null; // allow reconnection
     });
 
     socket.on("errorMessage", ({ message }: { message: string }) => {
