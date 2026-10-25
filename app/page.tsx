@@ -137,15 +137,21 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, [loading]);
 
-  // How it works: track which step card is in the middle of the screen
+  // How it works: track which step card crosses the middle of the screen.
+  // On mobile the cards are sticky and pile up, so several can overlap the
+  // middle line at once — the active step is the highest one currently there
+  // (this also keeps it correct when scrolling back up).
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
+    const crossing = new Set<number>();
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting)
-            setActiveStep(Number((entry.target as HTMLElement).dataset.step));
+          const step = Number((entry.target as HTMLElement).dataset.step);
+          if (entry.isIntersecting) crossing.add(step);
+          else crossing.delete(step);
         });
+        if (crossing.size) setActiveStep(Math.max(...crossing));
       },
       { rootMargin: "-50% 0px -50% 0px" },
     );
@@ -527,7 +533,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-10 flex flex-col gap-4 lg:mt-0 lg:gap-8">
+            {/* Mobile/tablet: each card sticks a little lower than the one
+                before, so the next card slides up over it and the covered
+                card shrinks back. Desktop: normal flow beside the tracker. */}
+            <div className="mt-10 flex flex-col gap-6 pb-16 lg:mt-0 lg:gap-8 lg:pb-0">
               {HOW_STEPS.map(({ icon: Icon, bg, title, text }, i) => (
                 <div
                   key={title}
@@ -535,9 +544,16 @@ export default function HomePage() {
                   ref={(el) => {
                     stepRefs.current[i] = el;
                   }}
+                  style={{ top: `${88 + i * 18}px` }}
+                  className="sticky lg:static"
                 >
-                  <Reveal
-                    className={`${bg} flex flex-col overflow-hidden rounded-3xl p-6 sm:p-8 lg:min-h-[420px]`}
+                  <div
+                    className={`origin-top rounded-3xl bg-white transition-transform duration-500 ease-out motion-reduce:transition-none ${
+                      i < activeStep ? "max-lg:scale-[0.93]" : "max-lg:scale-100"
+                    } ${i > 0 ? "max-lg:shadow-[0_-10px_30px_rgba(0,0,0,0.06)]" : ""}`}
+                  >
+                  <div
+                    className={`${bg} flex h-[470px] flex-col overflow-hidden rounded-3xl p-6 sm:h-[480px] sm:p-8 lg:h-auto lg:min-h-[420px]`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
@@ -591,7 +607,8 @@ export default function HomePage() {
 
                     <p className="font-poppins text-xl font-semibold">{title}</p>
                     <p className="mt-2 leading-relaxed text-tertiary">{text}</p>
-                  </Reveal>
+                  </div>
+                  </div>
                 </div>
               ))}
             </div>
