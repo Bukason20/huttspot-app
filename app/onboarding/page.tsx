@@ -29,8 +29,9 @@ export default function OnboardingPage() {
   }, []);
 
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-white flex items-center justify-center">
-      <Loader size={32} className="text-secondary animate-spin" />
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-gray-500">
+      <Loader size={28} className="animate-spin text-secondary" />
+      <p className="text-sm font-semibold">Getting things ready…</p>
     </div>
   );
 }

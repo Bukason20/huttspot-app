@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface OnboardingNavProps {
@@ -17,40 +17,33 @@ export default function OnboardingNav({
   const router = useRouter();
 
   return (
-    <div className="mt-auto pb-12 flex items-center justify-between">
+    // Pinned to the bottom on mobile; sits under the form on desktop
+    <div className="mt-auto flex items-center gap-3 pb-8 pt-8 md:mt-10 md:pb-0">
       {/* Back */}
       <button
         onClick={onBack ?? (() => router.back())}
-        className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer"
+        aria-label="Back"
+        className="flex h-14 w-14 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-[#1a1a1a] transition-colors hover:bg-gray-50"
       >
-        <ChevronLeft size={24} color="#fff" />
+        <ArrowLeft size={20} />
       </button>
 
-      {/* Next with SVG dashed ring */}
-      <div className={`relative w-20 h-20 ${disabled ? "opacity-40" : ""}`}>
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            stroke="#2d6a4f"
-            strokeWidth="5"
-            fill="transparent"
-            strokeDasharray="28 20"
-            strokeLinecap="round"
-            transform="rotate(-90 50 50)"
-          />
-        </svg>
-        <button
-          onClick={onNext}
-          disabled={disabled}
-          className={`w-14 h-14 rounded-full bg-secondary flex items-center justify-center absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 ${
-            disabled ? "cursor-not-allowed" : "cursor-pointer"
-          }`}
-        >
-          <ChevronRight size={22} color="#fff" />
-        </button>
-      </div>
+      {/* Next */}
+      <button
+        onClick={onNext}
+        disabled={disabled}
+        className={`group flex h-14 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-colors ${
+          disabled
+            ? "cursor-not-allowed bg-gray-100 text-gray-400"
+            : "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
+        }`}
+      >
+        Continue
+        <ArrowRight
+          size={18}
+          className={disabled ? "" : "transition-transform group-hover:translate-x-0.5"}
+        />
+      </button>
     </div>
   );
 }

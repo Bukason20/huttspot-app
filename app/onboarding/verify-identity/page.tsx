@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, CheckCircle } from "lucide-react";
+import { Lock, CheckCircle, ScanFace } from "lucide-react";
 import { BackButton } from "@/components/ui";
 import { useOnboarding } from "@/context/OnboardingContext";
 
@@ -78,42 +78,42 @@ function StepCard({
 }) {
   return (
     <div
-      className={`flex items-stretch rounded-xl overflow-hidden transition-all duration-500 ${
+      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all duration-500 ${
         isDone
-          ? "bg-green-100"
+          ? "border-secondary/20 bg-secondary/5"
           : isActive
-            ? "bg-orange-50"
-            : "bg-gray-50 opacity-50"
+            ? "border-primary/30 bg-primary/5"
+            : "border-gray-100 bg-white opacity-60"
       }`}
     >
-      <div
-        className={`w-1.5 flex-shrink-0 rounded-l-xl ${
-          isDone ? "bg-green-400" : isActive ? "bg-primary" : "bg-gray-300"
+      <span
+        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full font-poppins text-sm font-semibold transition-colors duration-500 ${
+          isDone
+            ? "bg-secondary text-white"
+            : isActive
+              ? "bg-primary text-white"
+              : "bg-gray-100 text-gray-400"
         }`}
-      />
-      <div className="px-4 py-3 flex items-center justify-between w-full">
-        <div>
-          <p className="text-xs text-gray-400 font-semibold mb-0.5">
-            {step.number}
-          </p>
-          <p className="text-sm font-bold text-[#1a1a1a]">{step.title}</p>
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-            {step.description}
-          </p>
-        </div>
-        {isDone && (
-          <div className="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center flex-shrink-0 ml-3">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M2 6l3 3 5-5"
-                stroke="white"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+      >
+        {isDone ? (
+          <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+            <path
+              d="M2 6l3 3 5-5"
+              stroke="white"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : (
+          step.number
         )}
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-[#1a1a1a]">{step.title}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-gray-500">
+          {step.description}
+        </p>
       </div>
     </div>
   );
@@ -127,7 +127,7 @@ function FaceFrame({
   capturedImageUrl?: string;
 }) {
   return (
-    <div className="flex justify-center my-8">
+    <div className="my-8 flex justify-center">
       <div className="relative w-56 h-56">
         <div
           className={`absolute inset-0 rounded-full border-[3px] ${
@@ -139,7 +139,7 @@ function FaceFrame({
             cx="50"
             cy="50"
             r="38"
-            stroke={captured ? "#2d6a4f" : "#e8622a"}
+            stroke={captured ? "#0a8754" : "#ff6b35"}
             strokeWidth="2"
             fill="transparent"
             strokeDasharray="8 5"
@@ -147,7 +147,7 @@ function FaceFrame({
             transform="rotate(-90 50 50)"
           />
         </svg>
-        <div className="absolute inset-6 rounded-full overflow-hidden flex items-center justify-center bg-gray-50">
+        <div className="absolute inset-6 flex items-center justify-center overflow-hidden rounded-full bg-[#f7f7f5]">
           {captured && capturedImageUrl ? (
             <img
               src={capturedImageUrl}
@@ -155,7 +155,7 @@ function FaceFrame({
               className="w-full h-full object-cover rounded-full"
             />
           ) : (
-            <div />
+            <ScanFace size={56} strokeWidth={1.5} className="text-gray-300" />
           )}
         </div>
       </div>
@@ -474,21 +474,21 @@ export default function VerifyIdentityPage() {
   // ── INTRO ─────────────────────────────────────────────────────
   if (scanStep === "intro") {
     return (
-      <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 pt-12 flex flex-col">
+      <div className="flex flex-1 flex-col">
         <BackButton />
-        <h1 className="text-2xl font-bold text-center">Verify Your Identity</h1>
-        <p className="text-center text-gray-400 text-sm mt-2">
+        <h1 className="font-poppins text-[28px] font-semibold leading-tight tracking-tight sm:text-[32px]">Verify Your Identity</h1>
+        <p className="mt-2 text-gray-500">
           A quick facial scan helps keep Huttspot safe and authentic.
         </p>
         <FaceFrame captured={false} />
-        <div className="mt-auto flex flex-col gap-4 pb-12">
-          <div className="flex items-center justify-center gap-2 text-primary text-sm">
-            <Lock size={15} />
+        <div className="mt-auto flex flex-col gap-4 pb-8 md:mt-2 md:pb-0">
+          <div className="flex items-center justify-center gap-2 rounded-2xl bg-[#f7f7f5] px-4 py-3 text-sm font-semibold text-tertiary">
+            <Lock size={15} className="text-secondary" />
             <span>Your data is encrypted and never shared.</span>
           </div>
           <button
             onClick={handleStartScan}
-            className="w-full bg-secondary text-white rounded-full py-4 text-[15px] font-semibold cursor-pointer"
+            className="h-14 w-full cursor-pointer rounded-full bg-secondary text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
           >
             Start Scan
           </button>
@@ -500,9 +500,9 @@ export default function VerifyIdentityPage() {
   // ── SCANNING ──────────────────────────────────────────────────
   if (scanStep === "scanning") {
     return (
-      <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 pt-12 flex flex-col">
-        <h1 className="text-2xl font-bold text-center">Verify Your Identity</h1>
-        <p className="text-center text-gray-400 text-sm mt-2">
+      <div className="flex flex-1 flex-col">
+        <h1 className="font-poppins text-[28px] font-semibold leading-tight tracking-tight sm:text-[32px]">Verify Your Identity</h1>
+        <p className="mt-2 text-gray-500">
           Follow the steps below carefully.
         </p>
 
@@ -518,7 +518,7 @@ export default function VerifyIdentityPage() {
                 cx="50"
                 cy="50"
                 r="47"
-                stroke={faceDetected ? "#2d6a4f" : "#e8622a"}
+                stroke={faceDetected ? "#0a8754" : "#ff6b35"}
                 strokeWidth="3"
                 fill="transparent"
                 strokeDasharray="28 20"
@@ -527,7 +527,7 @@ export default function VerifyIdentityPage() {
               />
             </svg>
 
-            <div className="absolute inset-3 rounded-full overflow-hidden bg-gray-900">
+            <div className="absolute inset-3 overflow-hidden rounded-full bg-[#1a1a1a]">
               <video
                 ref={videoRef}
                 className="w-full h-full object-cover"
@@ -540,7 +540,7 @@ export default function VerifyIdentityPage() {
         </div>
 
         {/* Hint text */}
-        <p className="text-center text-sm font-medium text-secondary mb-4">
+        <p className="mx-auto mb-5 w-fit rounded-full bg-secondary/10 px-4 py-2 text-center text-sm font-semibold text-secondary">
           {hint}
         </p>
 
@@ -548,7 +548,7 @@ export default function VerifyIdentityPage() {
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Steps */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5 pb-8 md:pb-0">
           {steps.map((step) => {
             const { isDone, isActive } = getStepStatus(step.key);
             return (
@@ -567,15 +567,15 @@ export default function VerifyIdentityPage() {
 
   // ── COMPLETE ──────────────────────────────────────────────────
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 pt-12 flex flex-col">
-      <h1 className="text-2xl font-bold text-center">Verify Your Identity</h1>
-      <p className="text-center text-gray-400 text-sm mt-2">
+    <div className="flex flex-1 flex-col">
+      <h1 className="font-poppins text-[28px] font-semibold leading-tight tracking-tight sm:text-[32px]">Verify Your Identity</h1>
+      <p className="mt-2 text-gray-500">
         Scan complete! Review your photo and submit.
       </p>
 
       <FaceFrame captured={true} capturedImageUrl={capturedImageUrl} />
 
-      <div className="flex flex-col gap-3 mb-6">
+      <div className="mb-6 flex flex-col gap-2.5">
         {steps.map((step) => (
           <StepCard
             key={step.number}
@@ -586,14 +586,14 @@ export default function VerifyIdentityPage() {
         ))}
       </div>
 
-      <div className="mt-auto flex flex-col gap-4 pb-12">
-        <div className="flex items-center justify-center gap-2 text-secondary text-sm">
+      <div className="mt-auto flex flex-col gap-4 pb-8 md:mt-2 md:pb-0">
+        <div className="flex items-center justify-center gap-2 rounded-2xl bg-secondary/10 px-4 py-3 text-sm font-semibold text-secondary">
           <CheckCircle size={15} />
           <span>Identity verified successfully.</span>
         </div>
         <button
           onClick={() => router.push("/onboarding/terms")}
-          className="w-full bg-secondary text-white rounded-full py-4 text-[15px] font-semibold cursor-pointer"
+          className="h-14 w-full cursor-pointer rounded-full bg-secondary text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
         >
           Submit
         </button>
