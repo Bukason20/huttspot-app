@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton, OnboardingNav } from "@/components/ui";
 import { useOnboarding } from "@/context/OnboardingContext";
+import { ChevronDown, Search } from "lucide-react";
 
 interface ParsedCountry {
   name: string;
@@ -65,19 +66,29 @@ export default function PhonePage() {
   };
 
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 pt-12 flex flex-col">
+    <div className="flex flex-1 flex-col">
       <BackButton />
-      <h1 className="text-2xl font-bold text-center mb-2">Phone Number</h1>
-      <p className="text-center text-gray-400 text-sm mb-10">
-        We'll use this to keep your account secure.
+      <h1 className="font-poppins text-[28px] font-semibold leading-tight tracking-tight sm:text-[32px]">
+        Phone Number
+      </h1>
+      <p className="mt-2 mb-8 text-gray-500">
+        We&apos;ll use this to keep your account secure.
       </p>
 
+      <label htmlFor="phone" className="mb-2 text-sm font-semibold">
+        Mobile number
+      </label>
+
       {/* Input row */}
+      <div className="relative">
       <div className="flex gap-2">
         {/* Country selector */}
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-2 bg-gray-200 rounded-full px-4 py-4 text-sm font-semibold cursor-pointer flex-shrink-0"
+          aria-expanded={showDropdown}
+          className={`flex h-12 flex-shrink-0 cursor-pointer items-center gap-2 rounded-xl border bg-white px-3.5 text-[15px] font-semibold transition-colors hover:border-gray-300 ${
+            showDropdown ? "border-secondary ring-4 ring-secondary/10" : "border-gray-200"
+          }`}
         >
           <img
             src={selected.flag}
@@ -85,32 +96,40 @@ export default function PhonePage() {
             className="w-5 h-4 object-cover rounded-sm"
           />
           <span>{selected.code}</span>
-          <span className="text-gray-400 text-xs">▼</span>
+          <ChevronDown
+            size={16}
+            className={`text-gray-400 transition-transform ${showDropdown ? "rotate-180" : ""}`}
+          />
         </button>
 
         {/* Number */}
         <input
+          id="phone"
           type="tel"
+          inputMode="numeric"
           placeholder="8012345678"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-          className="flex-1 bg-gray-200 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-400"
+          className="h-12 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 text-[15px] tracking-wide outline-none transition-colors placeholder:text-gray-400 hover:border-gray-300 focus:border-secondary focus:ring-4 focus:ring-secondary/10"
         />
       </div>
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className="mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden z-50">
-          <div className="p-3 border-b">
-            <input
-              type="text"
-              placeholder="Search country..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-gray-100 rounded-full px-4 py-2 text-sm outline-none"
-            />
+        <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_16px_40px_rgba(0,0,0,0.10)]">
+          <div className="border-b border-gray-100 p-3">
+            <div className="flex h-10 items-center gap-2 rounded-xl bg-[#f7f7f5] px-3">
+              <Search size={16} className="flex-shrink-0 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search country..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-transparent text-sm outline-none placeholder:text-gray-400"
+              />
+            </div>
           </div>
-          <div className="overflow-y-auto max-h-52">
+          <div className="max-h-60 overflow-y-auto py-1">
             {loading ? (
               <p className="text-center text-sm text-gray-400 py-4">
                 Loading countries...
@@ -124,7 +143,9 @@ export default function PhonePage() {
                     setShowDropdown(false);
                     setSearch("");
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm text-left"
+                  className={`flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-[#f7f7f5] ${
+                    c.cca2 === selected.cca2 ? "bg-secondary/5 font-semibold" : ""
+                  }`}
                 >
                   <img
                     src={c.flag}
@@ -139,6 +160,7 @@ export default function PhonePage() {
           </div>
         </div>
       )}
+      </div>
 
       <OnboardingNav
         onNext={handleNext}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 import { verifyEmail } from "@/lib/auth"; // ← clean import
+import { logo } from "@/assets";
 
 type Status = "loading" | "success" | "error";
 
@@ -44,11 +45,18 @@ export default function VerifyEmailPage() {
   }, []);
 
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 flex flex-col items-center justify-center text-center">
+    <div className="flex min-h-screen flex-col bg-[#fafaf8] font-nunito text-[#1a1a1a]">
+      <header className="flex justify-center px-6 py-6 sm:justify-start sm:px-10">
+        <a href="/" aria-label="HuttSpot home">
+          <img src={logo} alt="HuttSpot" className="h-7 w-auto sm:h-8" />
+        </a>
+      </header>
+      <main className="flex flex-1 items-center justify-center px-5 pb-16">
+      <div className="flex w-full max-w-[440px] flex-col items-center rounded-3xl border border-gray-100 bg-white px-6 py-10 text-center sm:px-10 sm:py-12">
       {status === "loading" && (
         <>
           <Loader size={48} className="text-secondary animate-spin mb-6" />
-          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">
+          <h1 className="font-poppins text-2xl font-semibold text-[#1a1a1a] mb-2">
             Verifying your email...
           </h1>
           <p className="text-gray-400 text-sm">Please wait a moment.</p>
@@ -57,18 +65,18 @@ export default function VerifyEmailPage() {
 
       {status === "success" && (
         <>
-          <div className="w-24 h-24 rounded-full bg-secondary/10 flex items-center justify-center mb-6">
-            <CheckCircle size={48} className="text-secondary" />
+          <div className="w-20 h-20 rounded-full bg-secondary/10 flex items-center justify-center mb-6">
+            <CheckCircle size={36} className="text-secondary" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-3">
+          <h1 className="font-poppins text-2xl font-semibold text-[#1a1a1a] mb-3">
             Email Verified!
           </h1>
-          <p className="text-gray-400 text-sm leading-relaxed mb-8">
+          <p className="text-gray-500 text-sm leading-relaxed mb-8">
             Your account has been verified. You can now sign in.
           </p>
           <button
             onClick={() => router.push("/auth/signin")}
-            className="w-full bg-secondary text-white rounded-full py-4 text-[15px] font-semibold cursor-pointer"
+            className="w-full bg-secondary hover:bg-[#08744a] text-white rounded-full h-12 text-[15px] font-semibold cursor-pointer transition-colors"
           >
             Go to Sign in
           </button>
@@ -77,31 +85,33 @@ export default function VerifyEmailPage() {
 
       {status === "error" && (
         <>
-          <div className="w-24 h-24 rounded-full bg-red-100 flex items-center justify-center mb-6">
-            <XCircle size={48} className="text-red-500" />
+          <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6">
+            <XCircle size={36} className="text-red-500" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-3">
+          <h1 className="font-poppins text-2xl font-semibold text-[#1a1a1a] mb-3">
             Verification Failed
           </h1>
-          <p className="text-gray-400 text-sm leading-relaxed mb-8">
+          <p className="text-gray-500 text-sm leading-relaxed mb-8">
             {message}
           </p>
           <div className="flex flex-col gap-3 w-full">
             <button
               onClick={() => router.push("/auth/signup")}
-              className="w-full bg-secondary text-white rounded-full py-4 text-[15px] font-semibold cursor-pointer"
+              className="w-full bg-secondary hover:bg-[#08744a] text-white rounded-full h-12 text-[15px] font-semibold cursor-pointer transition-colors"
             >
               Sign up again
             </button>
             <button
               onClick={() => router.push("/auth/check-email")}
-              className="w-full border border-gray-200 text-gray-500 rounded-full py-4 text-[15px] font-semibold cursor-pointer"
+              className="w-full border border-gray-300 text-[#1a1a1a] hover:bg-gray-50 rounded-full h-12 text-[15px] font-semibold cursor-pointer transition-colors"
             >
               Resend verification email
             </button>
           </div>
         </>
       )}
+      </div>
+      </main>
     </div>
   );
 }

@@ -4,11 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton, OnboardingNav, SelectOption } from "@/components/ui";
 import { useOnboarding } from "@/context/OnboardingContext";
+import { Search, Building, type LucideIcon } from "lucide-react";
 import { AccountMode } from "@/lib/types";
 
-const options: { value: AccountMode; label: string }[] = [
-  { value: "HUTTSPOTTER", label: "Huttspoter" },
-  { value: "AGENT", label: "Agent" },
+const options: {
+  value: AccountMode;
+  label: string;
+  description?: string;
+  icon: LucideIcon;
+}[] = [
+  { value: "HUTTSPOTTER", label: "Huttspoter", description: "I'm looking for a home, shop or roommate", icon: Search },
+  { value: "AGENT", label: "Agent", description: "I list properties and connect with clients", icon: Building },
 ];
 
 export default function AccountModePage() {
@@ -28,14 +34,19 @@ export default function AccountModePage() {
   };
 
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-white px-6 pt-12 flex flex-col">
+    <div className="flex flex-1 flex-col">
       <BackButton />
-      <h1 className="text-2xl font-bold text-center mb-16">Account Mode</h1>
-      <div className="flex flex-col gap-4">
+      <h1 className="font-poppins text-[28px] font-semibold leading-tight tracking-tight sm:text-[32px]">
+        Account Mode
+      </h1>
+      <p className="mt-2 mb-8 text-gray-500">How will you be using HuttSpot?</p>
+      <div role="radiogroup" className="flex flex-col gap-3">
         {options.map((option) => (
           <SelectOption
             key={option.value}
             label={option.label}
+            description={option.description}
+            icon={option.icon}
             selected={selected === option.value}
             onSelect={() => setSelected(option.value)}
           />

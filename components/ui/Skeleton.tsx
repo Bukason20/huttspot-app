@@ -27,51 +27,49 @@ export function AgentDashboardSkeleton() {
   return (
     <div className="px-5 animate-pulse">
       {/* Welcome row */}
-      <div className="flex items-center gap-3 mb-6">
-        <SkeletonAvatar size={14} />
-        <div className="flex flex-col gap-2 flex-1">
-          <SkeletonText className="w-2/3" />
-          <SkeletonText className="w-1/3" />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:mb-8">
+        <div className="flex items-center gap-3">
+          <SkeletonAvatar size={14} />
+          <div className="flex flex-col gap-2">
+            <SkeletonText className="h-5 w-48" />
+            <SkeletonText className="w-20" />
+          </div>
         </div>
+        <div className="h-12 w-full rounded-full bg-gray-200 sm:w-40" />
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-gray-200 rounded-2xl px-4 py-5 h-24" />
-        <div className="bg-gray-200 rounded-2xl px-4 py-5 h-24" />
-      </div>
-
-      {/* Avatar row */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:mb-8">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="w-14 h-14 rounded-full bg-gray-200" />
+          <div key={i} className="h-[136px] rounded-3xl bg-gray-200" />
         ))}
       </div>
 
-      {/* Section header */}
-      <div className="flex items-center justify-between mb-4">
-        <SkeletonText className="w-28" />
-        <SkeletonText className="w-14" />
-      </div>
-      <div className="h-px bg-gray-200 mb-4" />
-
-      {/* Listing cards */}
-      {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="bg-gray-100 rounded-2xl overflow-hidden flex items-center gap-3 p-3 mb-3"
-        >
-          <div className="w-24 h-24 rounded-xl bg-gray-200 flex-shrink-0" />
-          <div className="flex-1 flex flex-col gap-2">
-            <SkeletonText className="w-full" />
-            <SkeletonText className="w-2/3" />
-            <div className="flex gap-2 mt-1">
-              <div className="h-7 w-16 rounded-full bg-gray-200" />
-              <div className="h-7 w-24 rounded-full bg-gray-200" />
-            </div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Listing rows */}
+        <div className="rounded-3xl border border-gray-100 bg-white p-4 sm:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <SkeletonText className="w-32" />
+            <SkeletonText className="w-14" />
           </div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 py-4">
+              <div className="h-20 w-20 flex-shrink-0 rounded-2xl bg-gray-200 sm:h-24 sm:w-28" />
+              <div className="flex flex-1 flex-col gap-2">
+                <SkeletonText className="w-16" />
+                <SkeletonText className="w-3/4" />
+                <SkeletonText className="w-1/3" />
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+
+        {/* Side column */}
+        <div className="flex flex-col gap-6">
+          <div className="h-44 rounded-3xl bg-gray-200" />
+          <div className="h-44 rounded-3xl bg-gray-200" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -80,32 +78,46 @@ export function AgentDashboardSkeleton() {
 export function HuttspotterDashboardSkeleton() {
   return (
     <div className="px-5 animate-pulse">
-      {/* Search bar */}
-      <div className="flex items-center gap-2 mb-5">
-        <div className="flex-1 h-12 bg-gray-200 rounded-full" />
-        <div className="w-11 h-11 bg-gray-200 rounded-full flex-shrink-0" />
+      {/* Header + search */}
+      <div className="mb-6 flex flex-col gap-4 lg:mb-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-2">
+          <SkeletonText className="w-20" />
+          <SkeletonText className="h-7 w-56" />
+        </div>
+        <div className="flex w-full items-center gap-2 lg:max-w-md">
+          <div className="h-12 flex-1 rounded-full bg-gray-200" />
+          <div className="h-12 w-12 flex-shrink-0 rounded-full bg-gray-200" />
+        </div>
       </div>
 
-      {/* Map */}
-      <div className="h-48 bg-gray-200 rounded-2xl mb-5" />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Map */}
+        <div className="h-48 rounded-3xl bg-gray-200 sm:h-64 lg:order-2 lg:h-[calc(100vh-10rem)]" />
 
-      {/* Section header */}
-      <div className="flex items-center justify-between mb-4">
-        <SkeletonText className="w-28" />
-        <SkeletonText className="w-12" />
-      </div>
-
-      {/* Listing grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="bg-gray-100 rounded-2xl overflow-hidden">
-            <div className="h-28 bg-gray-200" />
-            <div className="p-2.5 flex flex-col gap-2">
-              <SkeletonText className="w-full" />
-              <SkeletonText className="w-2/3" />
-            </div>
+        <div className="lg:order-1">
+          {/* Section header */}
+          <div className="mb-4 flex items-center justify-between">
+            <SkeletonText className="w-32" />
+            <SkeletonText className="w-12" />
           </div>
-        ))}
+
+          {/* Listing grid */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-2 2xl:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+              >
+                <div className="aspect-[4/3] bg-gray-200" />
+                <div className="flex flex-col gap-2 p-3 sm:p-4">
+                  <SkeletonText className="w-full" />
+                  <SkeletonText className="w-2/3" />
+                  <SkeletonText className="w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
