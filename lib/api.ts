@@ -39,7 +39,15 @@ api.interceptors.response.use(
       error.message ||
       "Something went wrong";
 
-    return Promise.reject(new Error(message));
+    // Keep the same Error message as before, but also attach the HTTP status
+    // and the raw response body so callers can react to specific cases
+    // (e.g. "email not verified" on login).
+    return Promise.reject(
+      Object.assign(new Error(message), {
+        status: error.response?.status as number | undefined,
+        data: error.response?.data,
+      }),
+    );
   },
 );
 

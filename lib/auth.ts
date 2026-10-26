@@ -70,3 +70,23 @@ export async function verifyEmail(token: string) {
   );
   return response.data;
 }
+
+// Sends a fresh verification link to an unverified account
+export async function resendVerification(email: string) {
+  const response = await api.post<{ message: string; email: string }>(
+    "/api/auth/resend-verification",
+    { email },
+  );
+  return response.data;
+}
+
+/**
+ * True when a login error means "account exists but email isn't verified".
+ * Prefers a machine-readable code if the backend adds one; falls back to the
+ * current response shape ({ message: "Please verify your email…", email }).
+ */
+export function isEmailNotVerifiedError(err: any): boolean {
+  if (err?.data?.code === "EMAIL_NOT_VERIFIED") return true;
+  const message: string = err?.data?.message ?? err?.message ?? "";
+  return /verify your email/i.test(message);
+}
