@@ -125,43 +125,52 @@ export default function OnboardingTermsPage() {
   ];
 
   return (
-    <div className="max-w-[390px] mx-auto min-h-screen bg-[#F2F2F2] flex flex-col">
-      {/* Header */}
-      <div className="bg-secondary flex flex-col items-center justify-center h-[20vh] z-50">
-        <h1 className="text-2xl font-bold text-center text-white">
-          Terms of Service
-        </h1>
-      </div>
+    <div className="flex flex-1 flex-col">
+      <h1 className="font-poppins text-[28px] font-semibold leading-tight tracking-tight sm:text-[32px]">
+        Terms of Service
+      </h1>
+      <p className="mt-2 mb-6 text-gray-500">
+        Please read and accept these to finish setting up your account.
+      </p>
 
       {/* Terms card */}
-      <div className="mx-5 -translate-y-7 bg-white rounded-2xl border-2 border-primary px-5 pt-15 pb-5 overflow-y-auto min-h-[420px]">
+      <div className="rounded-3xl border border-gray-100 bg-[#fafaf8] p-5 sm:p-6">
         <ol className="flex flex-col gap-5">
           {termsList.map((term) => (
-            <li key={term.number}>
-              <p className="text-sm font-bold text-[#1a1a1a]">
-                {term.number}. {term.title}
-              </p>
-              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                {term.description}
-              </p>
+            <li key={term.number} className="flex gap-4">
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white font-poppins text-sm font-semibold text-secondary shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+                {term.number}
+              </span>
+              <div>
+                <p className="font-bold text-[#1a1a1a]">{term.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                  {term.description}
+                </p>
+              </div>
             </li>
           ))}
         </ol>
       </div>
 
       {/* Checkboxes */}
-      <div className="mx-5 mt-2 flex flex-col gap-4">
+      <div className="mt-5 flex flex-col gap-3">
         {checkboxes.map(({ state, set, label }) => (
           <button
             key={label}
             onClick={() => set(!state)}
-            className="flex items-center gap-3 cursor-pointer"
+            role="checkbox"
+            aria-checked={state}
+            className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition-all duration-200 ${
+              state
+                ? "border-secondary bg-secondary/5"
+                : "border-gray-200 bg-white hover:border-gray-300"
+            }`}
           >
             <div
-              className={`w-5 h-5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+              className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-2 transition-all duration-200 ${
                 state
-                  ? "bg-secondary border-secondary"
-                  : "bg-white border-gray-400"
+                  ? "border-secondary bg-secondary"
+                  : "border-gray-300 bg-white"
               }`}
             >
               {state && (
@@ -176,7 +185,7 @@ export default function OnboardingTermsPage() {
                 </svg>
               )}
             </div>
-            <span className="text-sm font-semibold text-[#1a1a1a] text-left">
+            <span className="text-sm font-semibold text-[#1a1a1a]">
               {label}
             </span>
           </button>
@@ -184,42 +193,46 @@ export default function OnboardingTermsPage() {
       </div>
 
       {/* Accept button */}
-      <div className="mt-auto px-5 pb-12 pt-5">
+      <div className="mt-auto pb-8 pt-8 md:mt-8 md:pb-0">
         <button
           onClick={handleAccept}
           disabled={!canProceed || loading}
-          className={`w-full rounded-full py-4 text-[15px] font-semibold transition-all duration-200 ${
+          className={`flex h-14 w-full items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-colors duration-200 ${
             canProceed && !loading
-              ? "bg-secondary text-white cursor-pointer"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
+              : "cursor-not-allowed bg-gray-100 text-gray-400"
           }`}
         >
+          {loading && (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          )}
           {loading ? loadingMessage : "Accept and continue"}
         </button>
       </div>
 
       {/* Error Modal */}
       {errorModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
-          <div className="relative bg-white rounded-3xl p-6 w-full max-w-[340px] flex flex-col items-center text-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
+          <div className="relative flex w-full max-w-[380px] flex-col items-center rounded-3xl bg-white p-8 text-center">
             <button
               onClick={() => setErrorModal(null)}
-              className="absolute top-4 right-4 cursor-pointer text-gray-400"
+              aria-label="Close"
+              className="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-              <AlertCircle size={32} className="text-red-500" />
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+              <AlertCircle size={30} className="text-red-500" />
             </div>
-            <h2 className="text-lg font-bold text-[#1a1a1a] mb-2">
+            <h2 className="mb-2 font-poppins text-xl font-semibold text-[#1a1a1a]">
               Something went wrong
             </h2>
-            <p className="text-sm text-gray-500 leading-relaxed mb-6">
+            <p className="mb-7 text-sm leading-relaxed text-gray-500">
               {errorModal}
             </p>
             <button
               onClick={() => setErrorModal(null)}
-              className="w-full bg-secondary text-white rounded-full py-3 text-sm font-semibold cursor-pointer"
+              className="h-12 w-full cursor-pointer rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a]"
             >
               Try again
             </button>

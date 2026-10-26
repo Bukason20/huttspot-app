@@ -6,6 +6,7 @@ export const heroImg = "/images/HeroImg.svg";
 export const heroClient = "/images/HeroClient.png";
 export const heroAgent = "/images/HeroAgent.png";
 export const heroWavyImg = "/images/HeroWavyImg.svg";
+export const heroPortrait = "/images/HeroImg.png";
 
 //---------------- Listing section ----------------------------
 export const room = "/images/Room.png";

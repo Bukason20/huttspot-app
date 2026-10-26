@@ -13,3 +13,4 @@ export {
   SkeletonText,
   SkeletonAvatar,
 } from "./Skeleton";
+export { default as Reveal, useInView } from "./Reveal";
