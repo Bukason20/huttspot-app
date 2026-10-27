@@ -81,7 +81,7 @@ export default function OnboardingShell({
             )}
           </div>
 
-          <div className="relative flex-1">
+          <div className="relative flex-1 h-full">
             <div className="absolute -bottom-[30%] -right-[10%] aspect-square h-[120%] rounded-full border border-white/15" />
             <div className="absolute -bottom-[30%] -right-[10%] aspect-square h-[85%] rounded-full border border-white/15" />
             <img
