@@ -2,9 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, CheckCircle, XCircle, X } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, XCircle, X, MailWarning } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import { loginUser, googleAuth } from "@/lib/auth";
+import {
+  loginUser,
+  googleAuth,
+  resendVerification,
+  isEmailNotVerifiedError,
+} from "@/lib/auth";
 import { getUserProfile } from "@/lib/user";
 import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
 import { jwtDecode } from "jwt-decode";
@@ -32,6 +37,11 @@ function SignInContent() {
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState<ModalType>(null);
   const [modalMessage, setModalMessage] = useState("");
+
+  // Unverified-email flow
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendError, setResendError] = useState("");
 
   const isValid = form.email.trim() !== "" && form.password.length >= 6;
 
@@ -75,10 +85,35 @@ function SignInContent() {
         }
       }, 1500);
     } catch (err: any) {
+      // Account exists but email isn't verified → offer a fresh link
+      if (isEmailNotVerifiedError(err)) {
+        setResendError("");
+        setUnverifiedEmail(err?.data?.email ?? form.email.trim());
+        return;
+      }
       setModalMessage(err.message || "Login failed. Please try again.");
       setModal("error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ── Resend verification link, then go to "check your email" ─
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail || resending) return;
+    setResending(true);
+    setResendError("");
+    try {
+      await resendVerification(unverifiedEmail);
+      // Same handoff the signup page uses for the check-email screen
+      localStorage.setItem("pending_verify_email", unverifiedEmail);
+      router.push("/auth/check-email");
+    } catch (err: any) {
+      setResendError(
+        err.message || "We couldn't send the email. Please try again.",
+      );
+    } finally {
+      setResending(false);
     }
   };
 
@@ -275,6 +310,56 @@ function SignInContent() {
               className="h-12 w-full cursor-pointer rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a]"
             >
               {modal === "success" ? "Continue" : "Try again"}
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Email not verified modal */}
+      {unverifiedEmail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
+          <div className="relative flex w-full max-w-[400px] flex-col items-center rounded-3xl bg-white p-8 text-center">
+            <button
+              onClick={() => setUnverifiedEmail(null)}
+              aria-label="Close"
+              className="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+            >
+              <X size={18} />
+            </button>
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <MailWarning size={30} className="text-primary" />
+            </div>
+            <h2 className="mb-2 font-poppins text-xl font-semibold text-[#1a1a1a]">
+              Verify your email first
+            </h2>
+            <p className="text-sm leading-relaxed text-gray-500">
+              Your account hasn&apos;t been verified yet. We&apos;ll send a new
+              verification link to
+            </p>
+            <p className="mb-6 mt-1 break-all text-sm font-semibold text-secondary">
+              {unverifiedEmail}
+            </p>
+
+            {resendError && (
+              <p className="mb-4 w-full rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                {resendError}
+              </p>
+            )}
+
+            <button
+              onClick={handleResendVerification}
+              disabled={resending}
+              className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {resending && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              )}
+              {resending ? "Sending..." : "Send verification link"}
+            </button>
+            <button
+              onClick={() => setUnverifiedEmail(null)}
+              className="mt-3 h-11 w-full cursor-pointer rounded-full text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-50"
+            >
+              Not now
             </button>
           </div>
         </div>
