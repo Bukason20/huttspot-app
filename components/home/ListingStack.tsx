@@ -13,6 +13,8 @@ interface ListingStackProps {
   groups: ListingGroup[];
   onSaveToggle?: (id: string) => void;
   savedIds?: string[];
+  onViewListing?: (id: string) => void;
+  onSeeAll?: (title: string) => void;
 }
 
 // Solid (not translucent) backgrounds so a covered card never shows through
@@ -33,6 +35,8 @@ export default function ListingStack({
   groups,
   onSaveToggle,
   savedIds = [],
+  onViewListing,
+  onSeeAll,
 }: ListingStackProps) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const anchorRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -105,11 +109,6 @@ export default function ListingStack({
                   }`}
                 >
                   {g.title}
-                  <span
-                    className={`text-xs ${active === i ? "text-white/60" : "text-gray-400"}`}
-                  >
-                    {g.properties.length}
-                  </span>
                 </button>
               ))}
             </div>
@@ -157,6 +156,8 @@ export default function ListingStack({
                     properties={group.properties}
                     onSaveToggle={onSaveToggle}
                     savedIds={savedIds}
+                    onViewListing={onViewListing}
+                    onSeeAll={onSeeAll}
                   />
                 </div>
               </div>

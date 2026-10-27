@@ -25,6 +25,10 @@ interface PropertySectionProps {
    * bleeds to the card's padding instead of the page's.
    */
   stacked?: boolean;
+  /** Override where a listing opens (e.g. landing page: sign-in gate) */
+  onViewListing?: (id: string) => void;
+  /** Override where "See all" goes */
+  onSeeAll?: (title: string) => void;
 }
 
 export default function PropertySection({
@@ -33,6 +37,8 @@ export default function PropertySection({
   onSaveToggle,
   savedIds = [],
   stacked = false,
+  onViewListing,
+  onSeeAll,
 }: PropertySectionProps) {
   const router = useRouter();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -106,21 +112,29 @@ export default function PropertySection({
       }
     >
       {/* Section header */}
-      <div className="mb-4 flex items-end justify-between gap-4">
+      <div
+        className={`mb-4 flex justify-between gap-4 ${stacked ? "items-center" : "items-end"}`}
+      >
         <div>
           <h3 className="font-poppins text-lg font-semibold text-[#1a1a1a] sm:text-xl">
             {title}
           </h3>
-          <p className="text-sm text-gray-500">
-            {properties.length} {properties.length === 1 ? "listing" : "listings"}
-          </p>
+          {/* Counts aren't meaningful for the landing page's featured pick */}
+          {!stacked && (
+            <p className="text-sm text-gray-500">
+              {properties.length}{" "}
+              {properties.length === 1 ? "listing" : "listings"}
+            </p>
+          )}
         </div>
         <div className="flex flex-shrink-0 items-center gap-4">
         <button
           onClick={() =>
-            router.push(
-              `/huttspotter/dashboard?type=${encodeURIComponent(title)}`,
-            )
+            onSeeAll
+              ? onSeeAll(title)
+              : router.push(
+                  `/huttspotter/dashboard?type=${encodeURIComponent(title)}`,
+                )
           }
           className="group flex flex-shrink-0 cursor-pointer items-center gap-1.5 text-sm font-semibold text-secondary"
         >
@@ -173,7 +187,11 @@ export default function PropertySection({
             <div
               key={listing._id}
               ref={edgeRef}
-              onClick={() => router.push(`/huttspotter/listing/${listing._id}`)}
+              onClick={() =>
+                onViewListing
+                  ? onViewListing(listing._id)
+                  : router.push(`/huttspotter/listing/${listing._id}`)
+              }
               className={`group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 ease-out hover:border-gray-200 hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-[300px] lg:w-[calc((100%-2rem)/3)] ${
                 show
                   ? "opacity-100 translate-y-0"

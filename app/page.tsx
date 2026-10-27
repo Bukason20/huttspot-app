@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import ListingStack, { ListingGroup } from "@/components/home/ListingStack";
 import { getFeaturedProperties } from "@/lib/properties";
-import { toggleSaveProperty } from "@/lib/userProperties";
+import { useSession, gatedRoute, homeRouteFor } from "@/lib/session";
 import { FeaturedProperty } from "@/lib/types";
 import HeroSection from "@/components/home/HeroSection";
 import {
@@ -114,7 +114,8 @@ const SPY_SECTIONS = ["top", "listings", "how-it-works", "pricing", "faq", "comm
 export default function HomePage() {
   const router = useRouter();
   const [allProperties, setAllProperties] = useState<FeaturedProperty[]>([]);
-  const [savedIds, setSavedIds] = useState<string[]>([]);
+  // Signed in? Onboarded? (from the profile API — see lib/session.ts)
+  const session = useSession();
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -192,22 +193,20 @@ export default function HomePage() {
     fetch();
   }, []);
 
-  const handleSaveToggle = useCallback(async (id: string) => {
-    // Saving needs an account — send visitors to sign up instead of
-    // failing silently
-    if (!localStorage.getItem("token")) {
-      router.push("/auth/signup");
-      return;
-    }
-    try {
-      await toggleSaveProperty(id);
-      setSavedIds((prev) =>
-        prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-      );
-    } catch (err) {
-      console.error("Failed to toggle save:", err);
-    }
-  }, [router]);
+  // Listing buttons: guests → sign in, not onboarded → onboarding,
+  // otherwise straight to the listing / the dashboard listings page
+  const openListing = (id: string) =>
+    router.push(gatedRoute(session, `/huttspotter/listing/${id}`));
+
+  const seeAllListings = (type?: string) =>
+    router.push(
+      gatedRoute(
+        session,
+        type
+          ? `/huttspotter/dashboard?type=${encodeURIComponent(type)}`
+          : "/huttspotter/dashboard",
+      ),
+    );
 
   // Group listings by property type. Known categories come first in the
   // usual order; any new type from the backend is still shown after them.
@@ -322,10 +321,20 @@ export default function HomePage() {
               Become an Agent
             </button>
             <button
-              onClick={() => router.push("/auth/signin")}
+              onClick={() =>
+                router.push(
+                  session.status === "user"
+                    ? homeRouteFor(session)
+                    : "/auth/signin",
+                )
+              }
               className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#1a1a1a] pl-4 pr-1.5 text-sm font-semibold text-white transition-colors hover:bg-black"
             >
-              Sign in
+              {session.status !== "user"
+                ? "Sign in"
+                : session.isOnboarded
+                  ? "Dashboard"
+                  : "Finish setup"}
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
                 <ArrowUpRight size={15} />
               </span>
@@ -486,8 +495,8 @@ export default function HomePage() {
           ) : (
             <ListingStack
               groups={grouped}
-              onSaveToggle={handleSaveToggle}
-              savedIds={savedIds}
+              onViewListing={openListing}
+              onSeeAll={seeAllListings}
             />
           )}
 
@@ -495,12 +504,19 @@ export default function HomePage() {
           {!loading && allProperties.length > 0 && (
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
-                onClick={() => router.push("/huttspotter/dashboard")}
+                onClick={() => seeAllListings()}
                 className="h-12 cursor-pointer rounded-full bg-[#1a1a1a] px-7 text-sm font-semibold text-white transition-colors hover:bg-black"
               >
                 View more listings
               </button>
-              <button className="h-12 cursor-pointer rounded-full border border-gray-300 px-7 text-sm font-semibold transition-colors hover:bg-gray-50">
+              <button
+                onClick={() => {
+                  // No agents page yet: only gate guests / not-onboarded users
+                  const to = gatedRoute(session, "");
+                  if (to) router.push(to);
+                }}
+                className="h-12 cursor-pointer rounded-full border border-gray-300 px-7 text-sm font-semibold transition-colors hover:bg-gray-50"
+              >
                 View agents
               </button>
             </div>

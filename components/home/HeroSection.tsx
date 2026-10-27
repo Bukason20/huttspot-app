@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { ArrowRight, BadgeCheck, Check } from "lucide-react";
 import { heroAgent, heroClient, heroPortrait } from "@/assets";
+import { useSession, homeRouteFor } from "@/lib/session";
 
 const HIGHLIGHTS = [
   "Verified agents",
@@ -13,34 +13,22 @@ const HIGHLIGHTS = [
 
 const HeroSection = () => {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountMode, setAccountMode] = useState<string | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const mode = localStorage.getItem("accountMode");
-    setIsLoggedIn(!!token);
-    setAccountMode(mode);
-    setChecking(false);
-  }, []);
+  // Signed in? Onboarded? Agent or house hunter? (profile API — lib/session.ts)
+  const session = useSession();
+  const checking = session.status === "loading";
 
   const handleGetStarted = () => {
-    if (isLoggedIn) {
-      // Already logged in — go to their dashboard
-      router.push(
-        accountMode === "AGENT" ? "/agent/dashboard" : "/huttspotter/dashboard",
-      );
+    if (session.status === "user") {
+      // Already logged in — onboarding if unfinished, otherwise their dashboard
+      router.push(homeRouteFor(session));
     } else {
       router.push("/auth/signup");
     }
   };
 
   const handleBecomeAgent = () => {
-    if (isLoggedIn) {
-      router.push(
-        accountMode === "AGENT" ? "/agent/dashboard" : "/huttspotter/dashboard",
-      );
+    if (session.status === "user") {
+      router.push(homeRouteFor(session));
     } else {
       router.push("/auth/signup");
     }

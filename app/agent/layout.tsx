@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { BottomNav, SideNav, DesktopSideNav } from "@/components/agent";
 import { Menu } from "lucide-react";
 import { logo } from "@/assets";
@@ -11,12 +12,27 @@ import { ListingProvider } from "@/context/ListingContext";
 function AgentLayoutInner({ children }: { children: React.ReactNode }) {
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const { user, loading } = useUser();
+  const router = useRouter();
+
+  // Not onboarded yet → back to onboarding (it resumes where they left off)
+  const needsOnboarding = !!user && !user.isOnboarded;
+  useEffect(() => {
+    if (needsOnboarding) router.replace("/onboarding");
+  }, [needsOnboarding, router]);
 
   const sideNavUser = {
     name: user?.name ?? "...",
     role: user?.accountMode === "AGENT" ? "Agent" : "Huttspoter",
     avatar: user?.profilePhoto,
   };
+
+  if (needsOnboarding) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
+        <span className="h-7 w-7 animate-spin rounded-full border-2 border-secondary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#f7f7f5] font-nunito text-[#1a1a1a]">
