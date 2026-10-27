@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
-import { verifyEmail } from "@/lib/auth"; // ← clean import
+import { verifyEmail, clearSession } from "@/lib/auth"; // ← clean import
 import { logo } from "@/assets";
 
 type Status = "loading" | "success" | "error";
@@ -31,6 +31,9 @@ export default function VerifyEmailPage() {
         document.cookie = "verify_token=; Max-Age=0; path=/";
 
         await verifyEmail(token); // ← clean call from lib/auth.ts
+
+        // Done with the pending email from signup / check-email
+        localStorage.removeItem("pending_verify_email");
 
         setStatus("success");
       } catch (err: any) {
@@ -72,13 +75,19 @@ export default function VerifyEmailPage() {
             Email Verified!
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed mb-8">
-            Your account has been verified. You can now sign in.
+            Your account has been verified. Sign in to finish setting up your
+            profile.
           </p>
           <button
-            onClick={() => router.push("/auth/signin")}
+            onClick={() => {
+              // If another account is still signed in on this browser,
+              // sign it out so the newly verified account can sign in
+              clearSession();
+              router.push("/auth/signin");
+            }}
             className="w-full bg-secondary hover:bg-[#08744a] text-white rounded-full h-12 text-[15px] font-semibold cursor-pointer transition-colors"
           >
-            Go to Sign in
+            Sign in to continue
           </button>
         </>
       )}
@@ -102,10 +111,15 @@ export default function VerifyEmailPage() {
               Sign up again
             </button>
             <button
-              onClick={() => router.push("/auth/check-email")}
+              onClick={() => {
+                // Signing in proves the account is theirs, then the
+                // sign-in page offers a fresh verification link
+                clearSession();
+                router.push("/auth/signin");
+              }}
               className="w-full border border-gray-300 text-[#1a1a1a] hover:bg-gray-50 rounded-full h-12 text-[15px] font-semibold cursor-pointer transition-colors"
             >
-              Resend verification email
+              Sign in to get a new link
             </button>
           </div>
         </>

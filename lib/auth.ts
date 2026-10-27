@@ -71,6 +71,15 @@ export async function verifyEmail(token: string) {
   return response.data;
 }
 
+// Clears any signed-in session on this browser (same steps as logout)
+export function clearSession() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("accountMode");
+  localStorage.removeItem("huttspot_onboarding");
+  document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+}
+
 // Sends a fresh verification link to an unverified account
 export async function resendVerification(email: string) {
   const response = await api.post<{ message: string; email: string }>(

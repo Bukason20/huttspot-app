@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, CheckCircle } from "lucide-react";
 import { logo } from "@/assets";
-import { resendVerification } from "@/lib/auth";
-import { authInputClass } from "@/components/ui/AuthShell";
+import { resendVerification, clearSession } from "@/lib/auth";
 
 // Seconds to wait between resend requests
 const RESEND_COOLDOWN = 60;
@@ -13,28 +12,28 @@ const RESEND_COOLDOWN = 60;
 export default function CheckEmailPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  // True when we arrived here without knowing the email (e.g. from the
-  // "verification failed" page or after a refresh) — ask for it instead
-  const [askForEmail, setAskForEmail] = useState(false);
+  const [ready, setReady] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [sending, setSending] = useState(false);
-  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [notice, setNotice] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     try {
+      // Set by signup or by the sign-in "verify your email" flow. It is kept
+      // (not removed) so a refresh still works, and cleared once verified.
       const storedEmail = localStorage.getItem("pending_verify_email");
       if (storedEmail) {
         setEmail(storedEmail);
-        localStorage.removeItem("pending_verify_email");
-        // A link was just sent (by signup or by sign-in) — don't allow an
-        // immediate resend
+        // A link was just sent — don't allow an immediate resend
         setCooldown(RESEND_COOLDOWN);
-      } else {
-        setAskForEmail(true);
       }
     } catch {
       setEmail("");
-      setAskForEmail(true);
+    } finally {
+      setReady(true);
     }
   }, []);
 
@@ -45,17 +44,19 @@ export default function CheckEmailPage() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  const isEmailValid = /^\S+@\S+\.\S+$/.test(email.trim());
-
+  // We only ever resend to the address this browser signed up / signed in
+  // with — never to an address typed in here.
   const handleResend = async () => {
-    if (!isEmailValid || sending || cooldown > 0) return;
+    if (!email || sending || cooldown > 0) return;
     setSending(true);
     setNotice(null);
     try {
-      await resendVerification(email.trim());
-      setAskForEmail(false);
+      await resendVerification(email);
       setCooldown(RESEND_COOLDOWN);
-      setNotice({ type: "success", text: "A new verification link is on its way." });
+      setNotice({
+        type: "success",
+        text: "A new verification link is on its way.",
+      });
     } catch (err: any) {
       setNotice({
         type: "error",
@@ -64,6 +65,12 @@ export default function CheckEmailPage() {
     } finally {
       setSending(false);
     }
+  };
+
+  const goToSignIn = () => {
+    // Make sure no other account is signed in on this browser
+    clearSession();
+    router.push("/auth/signin");
   };
 
   return (
@@ -80,85 +87,85 @@ export default function CheckEmailPage() {
           </div>
 
           <h1 className="mb-3 font-poppins text-2xl font-semibold text-[#1a1a1a]">
-            {askForEmail ? "Verify your email" : "Check your email"}
+            Check your email
           </h1>
 
-          {askForEmail ? (
-            <>
-              <p className="mb-6 text-sm leading-relaxed text-gray-500">
-                Enter the email you signed up with and we&apos;ll send you a new
-                verification link.
-              </p>
-              <input
-                type="email"
-                placeholder="example@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={`${authInputClass} mb-4 text-left`}
-              />
-            </>
-          ) : (
+          {!ready ? null : email ? (
             <>
               <p className="mb-2 text-sm leading-relaxed text-gray-500">
                 We sent a verification link to
               </p>
               <p className="mb-6 break-all text-sm font-semibold text-secondary">
-                {email || "your email address"}
+                {email}
               </p>
               <p className="text-sm leading-relaxed text-gray-500">
                 Click the link in the email to verify your account and get
                 started. Check your spam folder if you can&apos;t find it.
               </p>
+
+              {notice && (
+                <p
+                  className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm ${
+                    notice.type === "success"
+                      ? "bg-secondary/10 font-semibold text-secondary"
+                      : "bg-red-50 text-red-600"
+                  }`}
+                >
+                  {notice.type === "success" && <CheckCircle size={15} />}
+                  {notice.text}
+                </p>
+              )}
+
+              <div className="my-7 h-px w-full bg-gray-100" />
+
+              <p className="mb-3 text-sm text-gray-500">
+                Didn&apos;t receive the email?
+              </p>
+              <button
+                onClick={handleResend}
+                disabled={sending || cooldown > 0}
+                className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a] disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                {sending && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                )}
+                {sending
+                  ? "Sending..."
+                  : cooldown > 0
+                    ? `Resend in ${cooldown}s`
+                    : "Resend email"}
+              </button>
+            </>
+          ) : (
+            <>
+              {/* We don't know which account this is (e.g. opened on a
+                  different device). Signing in proves the account is theirs,
+                  and the sign-in page then offers a fresh link. */}
+              <p className="mb-7 text-sm leading-relaxed text-gray-500">
+                Need a new verification link? Sign in with the email and
+                password you signed up with and we&apos;ll send one to you.
+              </p>
+              <button
+                onClick={goToSignIn}
+                className="h-12 w-full cursor-pointer rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a]"
+              >
+                Sign in to get a new link
+              </button>
             </>
           )}
 
-          {notice && (
-            <p
-              className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm ${
-                notice.type === "success"
-                  ? "bg-secondary/10 font-semibold text-secondary"
-                  : "bg-red-50 text-red-600"
-              }`}
-            >
-              {notice.type === "success" && <CheckCircle size={15} />}
-              {notice.text}
-            </p>
-          )}
-
-          {!askForEmail && <div className="my-7 h-px w-full bg-gray-100" />}
-
-          {!askForEmail && (
-            <p className="mb-3 text-sm text-gray-500">
-              Didn&apos;t receive the email?
-            </p>
-          )}
-          <button
-            onClick={handleResend}
-            disabled={!isEmailValid || sending || cooldown > 0}
-            className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a] disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
-          >
-            {sending && (
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            )}
-            {sending
-              ? "Sending..."
-              : cooldown > 0
-                ? `Resend in ${cooldown}s`
-                : askForEmail
-                  ? "Send verification link"
-                  : "Resend email"}
-          </button>
-
           <div className="mt-6 flex flex-col gap-2 text-sm text-gray-500">
-            <p>
-              Already verified?{" "}
-              <button
-                onClick={() => router.push("/auth/signin")}
-                className="cursor-pointer font-semibold text-primary hover:underline"
-              >
-                Sign in
-              </button>
-            </p>
+            {email && (
+              <p>
+                Already verified?{" "}
+                <button
+                  onClick={goToSignIn}
+                  className="cursor-pointer font-semibold text-primary hover:underline"
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
             <p>
               Wrong email?{" "}
               <button

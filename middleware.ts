@@ -30,6 +30,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // ── Always-public pages ───────────────────────────────────
+  // The verification link must work whether or not someone is already
+  // signed in on this browser, so never redirect these.
+  if (PUBLIC_ROUTES.includes(pathname)) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get("token")?.value;
 
   // ── Protect private routes ────────────────────────────────
@@ -45,7 +52,8 @@ export function middleware(request: NextRequest) {
   }
 
   // ── Redirect logged-in users away from auth pages ─────────
-  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  // Exact match: "/auth" must not also catch "/auth/verify-email" etc.
+  const isAuthRoute = AUTH_ROUTES.includes(pathname);
 
   if (isAuthRoute && token) {
     return NextResponse.redirect(new URL("/", request.url));
