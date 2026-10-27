@@ -9,14 +9,22 @@ import {
   ImageOff,
   ChevronLeft,
   ChevronRight,
+  BedDouble,
+  Bath,
 } from "lucide-react";
-import { Property } from "@/lib/types";
+import { ListingCardData } from "@/lib/types";
 
 interface PropertySectionProps {
   title: string;
-  properties: Property[];
+  properties: ListingCardData[];
   onSaveToggle?: (id: string) => void;
   savedIds?: string[];
+  /**
+   * Rendered inside a stacked category card on the landing page:
+   * no outer margin / fade (the card handles that) and the carousel
+   * bleeds to the card's padding instead of the page's.
+   */
+  stacked?: boolean;
 }
 
 export default function PropertySection({
@@ -24,6 +32,7 @@ export default function PropertySection({
   properties,
   onSaveToggle,
   savedIds = [],
+  stacked = false,
 }: PropertySectionProps) {
   const router = useRouter();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -82,12 +91,19 @@ export default function PropertySection({
 
   if (properties.length === 0) return null;
 
+  // In a stacked card the cards are always shown (no scroll fade)
+  const show = stacked || isVisible;
+
   return (
     <div
       ref={sectionRef}
-      className={`mb-10 transition-all duration-700 ease-out ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      }`}
+      className={
+        stacked
+          ? ""
+          : `mb-10 transition-all duration-700 ease-out ${
+              isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`
+      }
     >
       {/* Section header */}
       <div className="mb-4 flex items-end justify-between gap-4">
@@ -141,7 +157,11 @@ export default function PropertySection({
       {/* Carousel — swipe on touch, arrows on tablet & desktop */}
       <div
         ref={scrollerRef}
-        className="scrollbar-hide -mx-5 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:mx-0 lg:scroll-px-0 lg:px-0"
+        className={`scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 ${
+          stacked
+            ? "-mx-5 scroll-px-5 px-5 sm:-mx-7 sm:scroll-px-7 sm:px-7 lg:-mx-8 lg:scroll-px-8 lg:px-8"
+            : "-mx-5 scroll-px-5 px-5 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:mx-0 lg:scroll-px-0 lg:px-0"
+        }`}
       >
         {properties.slice(0, 6).map((listing, i, shown) => {
           const coverPhoto = listing.media?.photos?.[0];
@@ -155,13 +175,13 @@ export default function PropertySection({
               ref={edgeRef}
               onClick={() => router.push(`/huttspotter/listing/${listing._id}`)}
               className={`group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-500 ease-out hover:border-gray-200 hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-[300px] lg:w-[calc((100%-2rem)/3)] ${
-                isVisible
+                show
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
               }`}
               style={{
                 // Stagger each card's animation
-                transitionDelay: isVisible ? `${i * 60}ms` : "0ms",
+                transitionDelay: show && !stacked ? `${i * 60}ms` : "0ms",
               }}
             >
               {/* Image */}
@@ -211,7 +231,7 @@ export default function PropertySection({
                   {listing.title}
                 </p>
                 {listing.location?.city && (
-                  <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
+                  <p className="mt-1 flex h-5 items-center gap-1 text-sm text-gray-500">
                     <MapPin size={13} className="flex-shrink-0" />
                     <span className="truncate">
                       {listing.location.city}
@@ -221,8 +241,24 @@ export default function PropertySection({
                     </span>
                   </p>
                 )}
+                <div className="mt-2 flex h-5 items-center gap-3 text-xs font-semibold text-tertiary">
+                  {!!listing.details?.bedrooms && (
+                    <span className="flex items-center gap-1">
+                      <BedDouble size={14} className="text-gray-400" />
+                      {listing.details.bedrooms}{" "}
+                      {listing.details.bedrooms === 1 ? "bed" : "beds"}
+                    </span>
+                  )}
+                  {!!listing.details?.bathrooms && (
+                    <span className="flex items-center gap-1">
+                      <Bath size={14} className="text-gray-400" />
+                      {listing.details.bathrooms}{" "}
+                      {listing.details.bathrooms === 1 ? "bath" : "baths"}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
-                  <p className="font-poppins text-base font-semibold text-[#1a1a1a]">
+                  <p className="min-w-0 truncate whitespace-nowrap font-poppins text-base font-semibold text-[#1a1a1a]">
                     ₦{listing.price?.toLocaleString()}
                     <span className="font-nunito text-xs font-semibold text-gray-500">
                       {" "}

@@ -222,6 +222,23 @@ export interface PaginatedResponse {
   data: Property[];
 }
 
+/**
+ * Public listing returned by GET /api/properties/featured (no auth).
+ * Agent details, street address and coordinates are intentionally left out.
+ */
+export type FeaturedProperty = Omit<Property, "agent" | "updatedAt" | "location"> & {
+  location?: { city: string; state: string };
+};
+
+/** Anything a listing card can render — full or public listing */
+export type ListingCardData = Property | FeaturedProperty;
+
+export interface FeaturedResponse {
+  message: string;
+  count: number;
+  data: FeaturedProperty[];
+}
+
 export interface ListResponse {
   message: string;
   count: number;
