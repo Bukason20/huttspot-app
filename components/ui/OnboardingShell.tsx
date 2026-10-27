@@ -81,13 +81,16 @@ export default function OnboardingShell({
             )}
           </div>
 
-          <div className="relative flex-1">
-            <div className="absolute -bottom-[30%] -right-[10%] aspect-square h-[120%] rounded-full border border-white/15" />
-            <div className="absolute -bottom-[30%] -right-[10%] aspect-square h-[85%] rounded-full border border-white/15" />
+          {/* Illustration: absolutely positioned against the panel itself
+              (not the space left under the step list), so it keeps the same
+              size on short laptop screens. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -bottom-[18%] -right-[14%] aspect-square h-[78%] rounded-full border border-white/15" />
+            <div className="absolute -bottom-[18%] -right-[14%] aspect-square h-[56%] rounded-full border border-white/15" />
             <img
               src={authImg3}
               alt=""
-              className="absolute bottom-0 right-6 h-full max-h-[340px] w-auto object-contain object-bottom"
+              className="absolute bottom-0 right-4 h-[min(72%,560px)] w-auto max-w-none object-contain object-bottom xl:right-8"
             />
           </div>
         </div>
