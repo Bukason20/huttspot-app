@@ -49,21 +49,24 @@ export default function ListingStack({
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
-    // Several stuck cards can cross the middle line at once — the one in
-    // front is the highest index (also correct when scrolling back up).
-    const crossing = new Set<number>();
+    // Watch each card's anchor (its natural, un-stuck position). The observed
+    // area is everything ABOVE the middle of the screen, so an anchor is
+    // "intersecting" once its card has scrolled up to the middle — and it
+    // stays that way. That also stays correct after a jump (nav link, tab
+    // click), which a thin middle-line observer would miss.
+    const passed = new Set<number>();
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          const idx = Number((entry.target as HTMLElement).dataset.idx);
-          if (entry.isIntersecting) crossing.add(idx);
-          else crossing.delete(idx);
+          const idx = Number((entry.target as HTMLElement).dataset.anchor);
+          if (entry.isIntersecting) passed.add(idx);
+          else passed.delete(idx);
         });
-        if (crossing.size) setActive(Math.max(...crossing));
+        setActive(passed.size ? Math.max(...passed) : 0);
       },
-      { rootMargin: "-50% 0px -50% 0px" },
+      { rootMargin: "100000px 0px -50% 0px" },
     );
-    cardRefs.current.forEach((el) => el && observer.observe(el));
+    anchorRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, [groups.length]);
 
@@ -129,6 +132,7 @@ export default function ListingStack({
           <Fragment key={group.title}>
             {/* Where this card sits before it sticks — used by the tabs */}
             <div
+              data-anchor={i}
               ref={(el) => {
                 anchorRefs.current[i] = el;
               }}

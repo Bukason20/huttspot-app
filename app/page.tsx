@@ -500,7 +500,7 @@ export default function HomePage() {
             />
           )}
 
-          {/* View more / View agents */}
+          {/* View more listings */}
           {!loading && allProperties.length > 0 && (
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
@@ -508,16 +508,6 @@ export default function HomePage() {
                 className="h-12 cursor-pointer rounded-full bg-[#1a1a1a] px-7 text-sm font-semibold text-white transition-colors hover:bg-black"
               >
                 View more listings
-              </button>
-              <button
-                onClick={() => {
-                  // No agents page yet: only gate guests / not-onboarded users
-                  const to = gatedRoute(session, "");
-                  if (to) router.push(to);
-                }}
-                className="h-12 cursor-pointer rounded-full border border-gray-300 px-7 text-sm font-semibold transition-colors hover:bg-gray-50"
-              >
-                View agents
               </button>
             </div>
           )}
