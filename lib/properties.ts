@@ -5,6 +5,7 @@ import {
   ListResponse,
   FilterParams,
   Intent,
+  FeaturedResponse,
 } from "./types";
 
 /**
@@ -17,6 +18,20 @@ export async function getAllProperties(params?: {
 }): Promise<PaginatedResponse> {
   const response = await api.get<PaginatedResponse>("/api/properties", {
     params,
+  });
+  return response.data;
+}
+
+/**
+ * GET /api/properties/featured  (public — no auth needed)
+ * A random set of published listings that have at least one photo.
+ * The set changes on every request. Used on the landing page.
+ */
+export async function getFeaturedProperties(
+  limit: number = 24,
+): Promise<FeaturedResponse> {
+  const response = await api.get<FeaturedResponse>("/api/properties/featured", {
+    params: { limit },
   });
   return response.data;
 }

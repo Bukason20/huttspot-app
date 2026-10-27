@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -19,10 +19,10 @@ import {
   BadgeCheck,
   MapPin,
 } from "lucide-react";
-import PropertySection from "@/components/home/PropertySection";
-import { getAllProperties } from "@/lib/properties";
-import { toggleSaveProperty } from "@/lib/userProperties";
-import { Property } from "@/lib/types";
+import ListingStack, { ListingGroup } from "@/components/home/ListingStack";
+import { getFeaturedProperties } from "@/lib/properties";
+import { useSession, gatedRoute, homeRouteFor } from "@/lib/session";
+import { FeaturedProperty } from "@/lib/types";
 import HeroSection from "@/components/home/HeroSection";
 import {
   communityImg2,
@@ -45,6 +45,24 @@ const PROPERTY_CATEGORIES = [
   "Land",
   "Room",
 ];
+
+// Backend type values that belong to one of the categories above
+const TYPE_ALIASES: Record<string, string> = {
+  apartment: "Flat / Apartment",
+  flat: "Flat / Apartment",
+  "self contained": "Self-Contained",
+  "self-con": "Self-Contained",
+  office: "Office Space",
+};
+
+const categoryFor = (type?: string) => {
+  const raw = (type ?? "").trim();
+  if (!raw) return "Other";
+  const known = PROPERTY_CATEGORIES.find(
+    (c) => c.toLowerCase() === raw.toLowerCase(),
+  );
+  return known ?? TYPE_ALIASES[raw.toLowerCase()] ?? raw;
+};
 
 // Landing page content (UI only)
 const HOW_STEPS = [
@@ -95,8 +113,9 @@ const SPY_SECTIONS = ["top", "listings", "how-it-works", "pricing", "faq", "comm
 
 export default function HomePage() {
   const router = useRouter();
-  const [allProperties, setAllProperties] = useState<Property[]>([]);
-  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [allProperties, setAllProperties] = useState<FeaturedProperty[]>([]);
+  // Signed in? Onboarded? (from the profile API — see lib/session.ts)
+  const session = useSession();
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -162,7 +181,8 @@ export default function HomePage() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await getAllProperties({ limit: 100 });
+        // Public endpoint — works for visitors who aren't signed in
+        const res = await getFeaturedProperties(24);
         setAllProperties(res.data);
       } catch (err) {
         console.error("Failed to load properties:", err);
@@ -173,24 +193,37 @@ export default function HomePage() {
     fetch();
   }, []);
 
-  const handleSaveToggle = useCallback(async (id: string) => {
-    try {
-      await toggleSaveProperty(id);
-      setSavedIds((prev) =>
-        prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-      );
-    } catch (err) {
-      console.error("Failed to toggle save:", err);
-    }
-  }, []);
+  // Listing buttons: guests → sign in, not onboarded → onboarding,
+  // otherwise straight to the listing / the dashboard listings page
+  const openListing = (id: string) =>
+    router.push(gatedRoute(session, `/huttspotter/listing/${id}`));
 
-  // Group properties by type
-  const grouped = PROPERTY_CATEGORIES.map((category) => ({
-    title: category,
-    properties: allProperties.filter(
-      (p) => p.type?.toLowerCase() === category.toLowerCase(),
-    ),
-  })).filter((g) => g.properties.length > 0); // only show categories that have listings
+  const seeAllListings = (type?: string) =>
+    router.push(
+      gatedRoute(
+        session,
+        type
+          ? `/huttspotter/dashboard?type=${encodeURIComponent(type)}`
+          : "/huttspotter/dashboard",
+      ),
+    );
+
+  // Group listings by property type. Known categories come first in the
+  // usual order; any new type from the backend is still shown after them.
+  const grouped: ListingGroup[] = (() => {
+    const map = new Map<string, FeaturedProperty[]>();
+    allProperties.forEach((p) => {
+      const key = categoryFor(p.type);
+      map.set(key, [...(map.get(key) ?? []), p]);
+    });
+    const rank = (t: string) => {
+      const i = PROPERTY_CATEGORIES.indexOf(t);
+      return i === -1 ? PROPERTY_CATEGORIES.length : i;
+    };
+    return [...map.entries()]
+      .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b))
+      .map(([title, properties]) => ({ title, properties }));
+  })();
 
 
   // Plans (content unchanged — layout only)
@@ -288,10 +321,20 @@ export default function HomePage() {
               Become an Agent
             </button>
             <button
-              onClick={() => router.push("/auth/signin")}
+              onClick={() =>
+                router.push(
+                  session.status === "user"
+                    ? homeRouteFor(session)
+                    : "/auth/signin",
+                )
+              }
               className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#1a1a1a] pl-4 pr-1.5 text-sm font-semibold text-white transition-colors hover:bg-black"
             >
-              Sign in
+              {session.status !== "user"
+                ? "Sign in"
+                : session.isOnboarded
+                  ? "Dashboard"
+                  : "Finish setup"}
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
                 <ArrowUpRight size={15} />
               </span>
@@ -403,36 +446,43 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="max-w-sm text-tertiary">
-              Browse what agents have posted, grouped by property type.
+              A fresh pick of real listings on HuttSpot, grouped by type. Sign
+              up to see full details and chat with the agent.
             </p>
           </Reveal>
 
           {loading ? (
-            // Skeleton placeholders while loading
-            <div>
-              {[1, 2].map((i) => (
-                <div key={i} className="mb-10 animate-pulse">
-                  <div className="mb-4 flex items-center justify-between">
+            // Skeleton — same shape as one stacked category card
+            <div className="animate-pulse">
+              <div className="mb-4 flex gap-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-9 w-28 rounded-full bg-gray-100" />
+                ))}
+              </div>
+              <div className="overflow-hidden rounded-3xl border border-gray-100 p-5 sm:p-7 lg:p-8">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex flex-col gap-2">
                     <div className="h-5 w-40 rounded-full bg-gray-200" />
-                    <div className="h-4 w-14 rounded-full bg-gray-200" />
+                    <div className="h-3.5 w-16 rounded-full bg-gray-200" />
                   </div>
-                  <div className="scrollbar-hide -mx-5 flex gap-4 overflow-hidden px-5 sm:-mx-8 sm:px-8 lg:mx-0 lg:px-0">
-                    {[1, 2, 3].map((j) => (
-                      <div
-                        key={j}
-                        className="w-[78%] flex-shrink-0 overflow-hidden rounded-2xl border border-gray-100 sm:w-[300px] lg:w-[calc((100%-2rem)/3)]"
-                      >
-                        <div className="aspect-[4/3] bg-gray-200" />
-                        <div className="flex flex-col gap-2 p-4">
-                          <div className="h-4 w-3/4 rounded-full bg-gray-200" />
-                          <div className="h-3 w-1/2 rounded-full bg-gray-200" />
-                          <div className="mt-2 h-6 w-1/3 rounded-full bg-gray-200" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="h-4 w-14 rounded-full bg-gray-200" />
                 </div>
-              ))}
+                <div className="-mx-5 flex gap-4 overflow-hidden px-5 sm:-mx-7 sm:px-7 lg:-mx-8 lg:px-8">
+                  {[1, 2, 3].map((j) => (
+                    <div
+                      key={j}
+                      className="w-[78%] flex-shrink-0 overflow-hidden rounded-2xl border border-gray-100 sm:w-[300px] lg:w-[calc((100%-2rem)/3)]"
+                    >
+                      <div className="aspect-[4/3] bg-gray-200" />
+                      <div className="flex flex-col gap-2 p-4">
+                        <div className="h-4 w-3/4 rounded-full bg-gray-200" />
+                        <div className="h-3 w-1/2 rounded-full bg-gray-200" />
+                        <div className="mt-2 h-6 w-1/3 rounded-full bg-gray-200" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : grouped.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-gray-200 px-6 py-14 text-center">
@@ -443,28 +493,21 @@ export default function HomePage() {
               </p>
             </div>
           ) : (
-            grouped.map((group) => (
-              <PropertySection
-                key={group.title}
-                title={group.title}
-                properties={group.properties}
-                onSaveToggle={handleSaveToggle}
-                savedIds={savedIds}
-              />
-            ))
+            <ListingStack
+              groups={grouped}
+              onViewListing={openListing}
+              onSeeAll={seeAllListings}
+            />
           )}
 
-          {/* View more / View agents */}
+          {/* View more listings */}
           {!loading && allProperties.length > 0 && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
-                onClick={() => router.push("/huttspotter/dashboard")}
+                onClick={() => seeAllListings()}
                 className="h-12 cursor-pointer rounded-full bg-[#1a1a1a] px-7 text-sm font-semibold text-white transition-colors hover:bg-black"
               >
                 View more listings
-              </button>
-              <button className="h-12 cursor-pointer rounded-full border border-gray-300 px-7 text-sm font-semibold transition-colors hover:bg-gray-50">
-                View agents
               </button>
             </div>
           )}
