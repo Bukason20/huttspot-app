@@ -267,10 +267,10 @@ export default function HomePage() {
 
       {/* ── Navbar ─────────────────────────────────────────── */}
       <header
-        className={`sticky top-0 z-40 border-b bg-white transition-shadow duration-300 ${
+        className={`sticky top-0 z-40 border-b transition-[background-color,box-shadow] duration-300 ${
           scrolled
-            ? "border-gray-100 shadow-[0_6px_24px_rgba(0,0,0,0.05)]"
-            : "border-transparent"
+            ? "border-gray-100 bg-white shadow-[0_6px_24px_rgba(0,0,0,0.05)]"
+            : "border-transparent bg-[#fbf8f3]"
         }`}
       >
         <nav
@@ -330,11 +330,7 @@ export default function HomePage() {
               }
               className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#1a1a1a] pl-4 pr-1.5 text-sm font-semibold text-white transition-colors hover:bg-black"
             >
-              {session.status !== "user"
-                ? "Sign in"
-                : session.isOnboarded
-                  ? "Dashboard"
-                  : "Finish setup"}
+              Sign in
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
                 <ArrowUpRight size={15} />
               </span>
@@ -369,6 +365,8 @@ export default function HomePage() {
       </header>
 
       <main>
+        {/* ── Hero band: hero + ticker + value strip on warm cream ── */}
+        <div className="bg-[#fbf8f3] pb-16 lg:pb-20">
         {/* ── Hero ──────────────────────────────────────────── */}
         <div
           id="top"
@@ -378,7 +376,7 @@ export default function HomePage() {
         </div>
 
         {/* ── Category ticker ───────────────────────────────── */}
-        <div className="marquee mb-16 overflow-hidden border-y border-gray-100 py-5 lg:mb-20">
+        <div className="marquee mb-12 overflow-hidden border-y border-[#ece6db] bg-white py-5 lg:mb-16">
           <div className="marquee-track flex w-max">
             {[...PROPERTY_CATEGORIES, ...PROPERTY_CATEGORIES].map((c, i) => (
               <span
@@ -395,7 +393,7 @@ export default function HomePage() {
 
         {/* ── Value strip ───────────────────────────────────── */}
         <div className="mx-auto max-w-6xl px-5 sm:px-8">
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-gray-100 bg-gray-100 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-[#ece6db] bg-[#ece6db] lg:grid-cols-4">
             {[
               {
                 icon: ShieldCheck,
@@ -418,7 +416,7 @@ export default function HomePage() {
                 text: "Find someone to share a space with.",
               },
             ].map(({ icon: Icon, title, text }, i) => (
-              <Reveal key={title} delay={i * 90} className="bg-[#fafaf8] p-5 sm:p-6">
+              <Reveal key={title} delay={i * 90} className="bg-white p-5 sm:p-6">
                 <Icon size={22} className="text-secondary" />
                 <p className="mt-4 font-poppins text-[15px] font-semibold">
                   {title}
@@ -429,6 +427,7 @@ export default function HomePage() {
               </Reveal>
             ))}
           </div>
+        </div>
         </div>
 
         {/* ── Listings ──────────────────────────────────────── */}
@@ -516,9 +515,10 @@ export default function HomePage() {
         {/* ── How it works ──────────────────────────────────── */}
         {/* Mobile/tablet: stacked cards. Desktop: sticky step list on the left,
             cards scroll past on the right and the active step follows along. */}
+        <div className="mt-20 bg-[#eef6f1] lg:mt-28">
         <section
           id="how-it-works"
-          className="mx-auto max-w-6xl scroll-mt-24 px-5 pt-20 sm:px-8 lg:pt-28"
+          className="mx-auto max-w-6xl scroll-mt-16 px-5 py-20 sm:px-8 lg:py-28"
         >
           <div className="lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
             <div className="lg:sticky lg:top-28 lg:self-start">
@@ -543,7 +543,7 @@ export default function HomePage() {
                         })
                       }
                       className={`flex w-full cursor-pointer items-center gap-4 rounded-2xl px-4 py-3 text-left transition-colors ${
-                        activeStep === i ? "bg-[#fafaf8]" : "hover:bg-[#fafaf8]"
+                        activeStep === i ? "bg-white" : "hover:bg-white/60"
                       }`}
                     >
                       <span
@@ -568,7 +568,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ol>
-              <div className="mt-6 hidden h-1 overflow-hidden rounded-full bg-gray-100 lg:block">
+              <div className="mt-6 hidden h-1 overflow-hidden rounded-full bg-white lg:block">
                 <div
                   className="h-full rounded-full bg-secondary transition-[width] duration-500"
                   style={{ width: `${((activeStep + 1) / HOW_STEPS.length) * 100}%` }}
@@ -657,6 +657,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        </div>
 
         {/* ── For agents ────────────────────────────────────── */}
         <section className="mx-auto max-w-6xl px-5 pt-20 sm:px-8 lg:pt-28">
@@ -702,9 +703,10 @@ export default function HomePage() {
         </section>
 
         {/* ── Subscription ──────────────────────────────────── */}
+        <div className="mt-20 bg-[#fbf8f3] lg:mt-28">
         <section
           id="pricing"
-          className="mx-auto max-w-6xl scroll-mt-24 px-5 pt-20 sm:px-8 lg:pt-28"
+          className="mx-auto max-w-6xl scroll-mt-16 px-5 py-20 sm:px-8 lg:py-28"
         >
           <Reveal className="text-center">
             <h2 className="font-poppins text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -721,7 +723,7 @@ export default function HomePage() {
                 className={`flex flex-col rounded-3xl p-7 sm:p-8 ${
                   plan.featured
                     ? "bg-secondary text-white"
-                    : "border border-gray-200 bg-white"
+                    : "border border-[#ece6db] bg-white"
                 }`}
               >
                 <p
@@ -771,6 +773,7 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+        </div>
 
         {/* ── FAQ ───────────────────────────────────────────── */}
         <section
@@ -838,7 +841,7 @@ export default function HomePage() {
           id="community"
           className="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 lg:py-28"
         >
-          <Reveal className="grid items-center gap-10 rounded-[32px] bg-[#fafaf8] p-6 sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14 lg:p-14">
+          <Reveal className="grid items-center gap-10 rounded-[32px] bg-[#eef6f1] p-6 sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14 lg:p-14">
             <div className="text-center lg:text-left">
               <h2 className="font-poppins text-3xl font-semibold tracking-tight sm:text-4xl">
                 <span className="text-secondary">HuttSpot</span>{" "}
@@ -866,7 +869,7 @@ export default function HomePage() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="border-t border-gray-100">
+      <footer className="border-t border-[#ece6db] bg-[#fbf8f3]">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
             <img src={logo} alt="HuttSpot" className="h-8 w-auto" />
@@ -917,7 +920,7 @@ export default function HomePage() {
             </ul>
           </div>
         </div>
-        <div className="border-t border-gray-100">
+        <div className="border-t border-[#ece6db]">
           <p className="mx-auto max-w-6xl px-5 py-6 text-xs text-gray-400 sm:px-8">
             © {new Date().getFullYear()} HuttSpot. All rights reserved.
           </p>
