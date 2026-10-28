@@ -97,23 +97,23 @@ export default function AgentDashboardPage() {
       value: 0,
       icon: Inbox,
       className: "bg-primary/10",
-      iconWrap: "bg-white text-primary",
+      iconWrap: "bg-surface text-primary",
       labelClass: "text-tertiary",
     },
     {
       label: "Drafts",
       value: draftsCount,
       icon: FileText,
-      className: "bg-[#f3efe6]",
-      iconWrap: "bg-white text-[#1a1a1a]",
+      className: "bg-cream",
+      iconWrap: "bg-surface text-ink",
       labelClass: "text-tertiary",
     },
     {
       label: "Total Listings",
       value: listings.length,
       icon: Layers,
-      className: "border border-gray-100 bg-white",
-      iconWrap: "bg-[#f7f7f5] text-[#1a1a1a]",
+      className: "border border-line bg-surface",
+      iconWrap: "bg-subtle text-ink",
       labelClass: "text-tertiary",
     },
   ];
@@ -138,14 +138,14 @@ export default function AgentDashboardPage() {
             <p className="font-poppins text-xl font-semibold tracking-tight sm:text-2xl">
               Welcome back, {user?.name?.split(" ")[0] ?? "..."}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted">
               {user?.accountMode === "AGENT" ? "Agent" : "Huttspoter"}
             </p>
           </div>
         </div>
         <button
           onClick={handleAddNew}
-          className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-[#1a1a1a] px-6 text-sm font-semibold text-white transition-colors hover:bg-black"
+          className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-on-ink transition-colors hover:bg-ink/90"
         >
           <Plus size={18} />
           New listing
@@ -171,7 +171,7 @@ export default function AgentDashboardPage() {
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Recent Listings */}
-        <section className="rounded-3xl border border-gray-100 bg-white p-4 sm:p-6">
+        <section className="rounded-3xl border border-line bg-surface p-4 sm:p-6">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-poppins text-lg font-semibold">
               Recent Listings
@@ -186,13 +186,13 @@ export default function AgentDashboardPage() {
 
           {listings.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f7f7f5]">
-                <Home size={22} className="text-gray-400" />
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-subtle">
+                <Home size={22} className="text-faint" />
               </span>
               <p className="mt-4 font-semibold">
                 You don&apos;t have any properties yet.
               </p>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-muted">
                 Add your first listing to start meeting clients.
               </p>
               <button
@@ -203,7 +203,7 @@ export default function AgentDashboardPage() {
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-line">
               {listings.slice(0, 3).map((listing) => {
                 const coverImage =
                   listing.media?.photos?.[0] ||
@@ -235,10 +235,10 @@ export default function AgentDashboardPage() {
                       <p className="truncate font-semibold leading-snug">
                         {listing.title}
                       </p>
-                      <p className="mt-0.5 text-sm font-bold text-[#1a1a1a]">
+                      <p className="mt-0.5 text-sm font-bold text-ink">
                         ₦{listing.price.toLocaleString()}
                         {listing.paymentType ? (
-                          <span className="font-semibold text-gray-500">
+                          <span className="font-semibold text-muted">
                             {` / ${listing.paymentType}`}
                           </span>
                         ) : (
@@ -291,7 +291,7 @@ export default function AgentDashboardPage() {
                           Resume
                         </button>
                       )}
-                      <button className="h-9 cursor-pointer rounded-full border border-red-200 px-5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50">
+                      <button className="h-9 cursor-pointer rounded-full border border-red-200 px-5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-500/10">
                         Remove
                       </button>
                     </div>
@@ -304,7 +304,7 @@ export default function AgentDashboardPage() {
 
         {/* Side column */}
         <aside className="flex flex-col gap-6">
-          <div className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-6">
+          <div className="rounded-3xl border border-line bg-surface p-5 sm:p-6">
             <h2 className="font-poppins text-lg font-semibold">
               Recent clients
             </h2>
@@ -312,16 +312,16 @@ export default function AgentDashboardPage() {
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="-ml-2 h-12 w-12 rounded-full border-2 border-white bg-gray-200 first:ml-0"
+                  className="-ml-2 h-12 w-12 rounded-full border-2 border-surface bg-skeleton first:ml-0"
                 />
               ))}
             </div>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-muted">
               House hunters you chat with will show up here.
             </p>
           </div>
 
-          <div className="rounded-3xl bg-[#1a1a1a] p-5 text-white sm:p-6">
+          <div className="rounded-3xl border border-line bg-[#1a1a1a] p-5 text-white sm:p-6">
             <p className="font-poppins text-lg font-semibold leading-snug">
               Got a new property?
             </p>

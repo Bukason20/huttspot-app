@@ -15,7 +15,7 @@ export default function BottomNav() {
   const router = useRouter();
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="mx-auto flex max-w-md items-center justify-around px-4 py-2">
         {navItems.map((item) => {
           const isActive = pathname === item.path;
@@ -34,11 +34,11 @@ export default function BottomNav() {
               >
                 <Icon
                   size={21}
-                  className={isActive ? "text-secondary" : "text-gray-400"}
+                  className={isActive ? "text-secondary" : "text-faint"}
                 />
               </span>
               <span
-                className={`text-[11px] font-semibold ${isActive ? "text-secondary" : "text-gray-500"}`}
+                className={`text-[11px] font-semibold ${isActive ? "text-secondary" : "text-muted"}`}
               >
                 {item.label}
               </span>

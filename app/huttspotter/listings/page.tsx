@@ -19,14 +19,14 @@ function ListingsGridSkeleton({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+          className="overflow-hidden rounded-2xl border border-line bg-surface"
         >
-          <div className="aspect-[4/3] bg-gray-200" />
+          <div className="aspect-[4/3] bg-skeleton" />
           <div className="flex flex-col gap-2 p-3 sm:p-4">
             <SkeletonText className="w-full" />
             <SkeletonText className="w-2/3" />
             <SkeletonText className="mt-2 w-1/2" />
-            <div className="mt-2 h-9 rounded-full bg-gray-200 sm:h-10" />
+            <div className="mt-2 h-9 rounded-full bg-skeleton sm:h-10" />
           </div>
         </div>
       ))}
@@ -117,24 +117,24 @@ function ListingsContent() {
           <h1 className="font-poppins text-2xl font-semibold tracking-tight sm:text-3xl">
             Listings
           </h1>
-          <p className="mt-1 text-gray-500">
+          <p className="mt-1 text-muted">
             Browse every property on HuttSpot, or jump to the ones you saved.
           </p>
         </div>
-        <div className="flex h-12 w-full items-center gap-2 rounded-full border border-gray-200 bg-white px-4 transition-colors focus-within:border-secondary lg:max-w-sm">
-          <Search size={18} className="flex-shrink-0 text-gray-400" />
+        <div className="flex h-12 w-full items-center gap-2 rounded-full border border-line-strong bg-surface px-4 transition-colors focus-within:border-secondary lg:max-w-sm">
+          <Search size={18} className="flex-shrink-0 text-faint" />
           <input
             type="text"
             placeholder="Search title or location..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-gray-400"
+            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-faint"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
               aria-label="Clear search"
-              className="cursor-pointer text-gray-400 hover:text-gray-600"
+              className="cursor-pointer text-faint hover:text-muted"
             >
               <X size={16} />
             </button>
@@ -145,7 +145,7 @@ function ListingsContent() {
       {/* All / Saved tabs */}
       <div
         role="tablist"
-        className="mb-4 inline-grid grid-cols-2 gap-1 rounded-full border border-gray-200 bg-white p-1"
+        className="mb-4 inline-grid grid-cols-2 gap-1 rounded-full border border-line-strong bg-surface p-1"
       >
         {(
           [
@@ -163,19 +163,19 @@ function ListingsContent() {
             }}
             className={`flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors sm:px-5 ${
               tab === key
-                ? "bg-[#1a1a1a] text-white"
-                : "text-tertiary hover:bg-gray-50"
+                ? "bg-ink text-on-ink"
+                : "text-tertiary hover:bg-subtle"
             }`}
           >
             <Icon
               size={15}
-              fill={key === "saved" && tab === key ? "#fff" : "none"}
+              fill={key === "saved" && tab === key ? "currentColor" : "none"}
             />
             {label}
             {key === "saved" && !saved.loading && (
               <span
                 className={`rounded-full px-1.5 text-xs ${
-                  tab === key ? "bg-white/20" : "bg-gray-100"
+                  tab === key ? "bg-on-ink/15" : "bg-subtle"
                 }`}
               >
                 {saved.savedIds.size}
@@ -195,7 +195,7 @@ function ListingsContent() {
               className={`h-9 flex-shrink-0 cursor-pointer rounded-full border px-4 text-sm font-semibold transition-colors ${
                 type === t
                   ? "border-secondary bg-secondary/10 text-secondary"
-                  : "border-gray-200 bg-white text-tertiary hover:border-gray-300"
+                  : "border-line-strong bg-surface text-tertiary hover:border-faint"
               }`}
             >
               {t}
@@ -208,12 +208,12 @@ function ListingsContent() {
       {isLoading ? (
         <ListingsGridSkeleton />
       ) : visible.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-gray-200 bg-white px-6 py-14 text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f7f7f5]">
+        <div className="rounded-3xl border border-dashed border-line-strong bg-surface px-6 py-14 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-subtle">
             {tab === "saved" && !hasFilters ? (
-              <Heart size={22} className="text-gray-400" />
+              <Heart size={22} className="text-faint" />
             ) : (
-              <Home size={22} className="text-gray-400" />
+              <Home size={22} className="text-faint" />
             )}
           </span>
           <p className="mt-4 font-semibold">
@@ -221,7 +221,7 @@ function ListingsContent() {
               ? "No saved listings yet"
               : "No listings match your filters"}
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             {tab === "saved" && !hasFilters
               ? "Tap the heart on any listing to keep it here."
               : "Try another type or search term."}
@@ -255,7 +255,7 @@ function ListingsContent() {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="flex h-12 cursor-pointer items-center gap-2 rounded-full border border-gray-300 bg-white px-7 text-sm font-semibold transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-12 cursor-pointer items-center gap-2 rounded-full border border-line-strong bg-surface px-7 text-sm font-semibold transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loadingMore && (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

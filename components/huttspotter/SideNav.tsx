@@ -13,8 +13,8 @@ import {
   Sun,
   LogOut,
 } from "lucide-react";
-import { useState } from "react";
 import { logo } from "@/assets";
+import { useTheme } from "@/lib/theme";
 
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", path: "/huttspotter/dashboard" },
@@ -57,7 +57,7 @@ function clearSession() {
 
 function UserCard({ user }: { user: SideNavUser }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-[#f7f7f5] p-3">
+    <div className="flex items-center gap-3 rounded-2xl bg-subtle p-3">
       {user.avatar ? (
         <img
           src={user.avatar}
@@ -70,10 +70,10 @@ function UserCard({ user }: { user: SideNavUser }) {
         </div>
       )}
       <div className="min-w-0">
-        <p className="truncate font-bold leading-tight text-[#1a1a1a]">
+        <p className="truncate font-bold leading-tight text-ink">
           {user.name}
         </p>
-        <p className="text-sm text-gray-500">{user.role}</p>
+        <p className="text-sm text-muted">{user.role}</p>
       </div>
     </div>
   );
@@ -99,7 +99,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] font-semibold transition-colors ${
               isActive
                 ? "bg-secondary/10 text-secondary"
-                : "text-tertiary hover:bg-gray-50 hover:text-[#1a1a1a]"
+                : "text-tertiary hover:bg-subtle hover:text-ink"
             }`}
           >
             <Icon size={19} />
@@ -112,21 +112,26 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  // Shared, persisted theme (lib/theme.ts) — both toggles stay in sync
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+  const setIsDark = (dark: boolean) => setTheme(dark ? "dark" : "light");
   return (
-    <div className="grid grid-cols-2 gap-1 rounded-full bg-[#f2f2f0] p-1">
+    <div className="grid grid-cols-2 gap-1 rounded-full bg-subtle p-1">
       <button
         onClick={() => setIsDark(false)}
+        aria-pressed={!isDark}
         className={`flex h-9 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors ${
-          !isDark ? "bg-white text-[#1a1a1a] shadow-sm" : "text-gray-500"
+          !isDark ? "bg-surface text-ink shadow-sm" : "text-muted"
         }`}
       >
         <Sun size={15} /> Light
       </button>
       <button
         onClick={() => setIsDark(true)}
+        aria-pressed={isDark}
         className={`flex h-9 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors ${
-          isDark ? "bg-[#1a1a1a] text-white" : "text-gray-500"
+          isDark ? "bg-secondary text-white shadow-sm" : "text-muted"
         }`}
       >
         <Moon size={15} /> Dark
@@ -150,13 +155,13 @@ export function HuttspotterSideNav({ isOpen, onClose, user }: SideNavProps) {
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
-      <aside className="fixed left-0 top-0 z-50 flex h-full w-[85%] max-w-[320px] flex-col bg-white px-4 pb-6 pt-5 font-nunito">
+      <aside className="fixed left-0 top-0 z-50 flex h-full w-[85%] max-w-[320px] flex-col bg-surface px-4 pb-6 pt-5 font-nunito">
         <div className="mb-6 flex items-center justify-between pl-2">
-          <img src={logo} alt="HuttSpot" className="h-7 w-auto" />
+          <img src={logo} alt="HuttSpot" className="theme-logo h-7 w-auto" />
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-muted hover:bg-subtle"
           >
             <X size={20} />
           </button>
@@ -168,11 +173,11 @@ export function HuttspotterSideNav({ isOpen, onClose, user }: SideNavProps) {
           <NavList onNavigate={onClose} />
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">
+        <div className="flex flex-col gap-3 border-t border-line pt-4">
           <ThemeToggle />
           <button
             onClick={handleLogout}
-            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-semibold text-red-500 transition-colors hover:bg-red-50"
+            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-[15px] font-semibold text-red-500 transition-colors hover:bg-red-500/10"
           >
             <LogOut size={19} />
             Log out
@@ -193,28 +198,28 @@ export function HuttspotterDesktopNav({ user }: { user: SideNavUser }) {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-gray-100 bg-white px-4 pb-6 pt-7 lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-line bg-surface px-4 pb-6 pt-7 lg:flex">
       <button
         onClick={() => router.push("/")}
         className="mb-8 cursor-pointer self-start pl-2"
         aria-label="HuttSpot home"
       >
-        <img src={logo} alt="HuttSpot" className="h-8 w-auto" />
+        <img src={logo} alt="HuttSpot" className="theme-logo h-8 w-auto" />
       </button>
 
-      <p className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-gray-400">
+      <p className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-faint">
         Menu
       </p>
       <div className="flex-1 overflow-y-auto">
         <NavList />
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">
+      <div className="flex flex-col gap-3 border-t border-line pt-4">
         <ThemeToggle />
         <UserCard user={user} />
         <button
           onClick={handleLogout}
-          className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50"
+          className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-500/10"
         >
           <LogOut size={18} />
           Log out

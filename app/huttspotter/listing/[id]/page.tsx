@@ -109,14 +109,14 @@ export default function ListingDetailPage() {
   if (!listing) {
     return (
       <div className="px-5">
-        <div className="mx-auto flex max-w-md flex-col items-center rounded-3xl border border-gray-100 bg-white px-6 py-14 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f7f7f5]">
-            <SearchX size={26} className="text-gray-400" />
+        <div className="mx-auto flex max-w-md flex-col items-center rounded-3xl border border-line bg-surface px-6 py-14 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-subtle">
+            <SearchX size={26} className="text-faint" />
           </span>
           <h1 className="mt-5 font-poppins text-xl font-semibold">
             Listing not found
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-muted">
             It may have been removed or is no longer available.
           </p>
           <button
@@ -170,19 +170,19 @@ export default function ListingDetailPage() {
         <button
           onClick={() => router.back()}
           aria-label="Go back"
-          className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-[#1a1a1a] transition-colors hover:bg-gray-50"
+          className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-line-strong bg-surface text-ink transition-colors hover:bg-subtle"
         >
           <ArrowLeft size={18} />
         </button>
-        <nav className="flex min-w-0 items-center gap-1.5 text-sm text-gray-500">
+        <nav className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
           <button
             onClick={() => router.push("/huttspotter/listings")}
-            className="cursor-pointer hover:text-[#1a1a1a]"
+            className="cursor-pointer hover:text-ink"
           >
             Listings
           </button>
           <ChevronRight size={14} className="flex-shrink-0" />
-          <span className="truncate font-semibold text-[#1a1a1a]">
+          <span className="truncate font-semibold text-ink">
             {listing.title}
           </span>
         </nav>
@@ -191,7 +191,7 @@ export default function ListingDetailPage() {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10">
         {/* ── Gallery ─────────────────────────────────────── */}
         <section>
-          <div className="group relative aspect-[4/3] overflow-hidden rounded-3xl bg-gray-100">
+          <div className="group relative aspect-[4/3] overflow-hidden rounded-3xl bg-subtle">
             {hasPhotos ? (
               <img
                 src={photos[activeImage]}
@@ -199,14 +199,14 @@ export default function ListingDetailPage() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-gray-400">
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-faint">
                 <ImageOff size={28} />
                 <span className="text-sm">No photos yet</span>
               </div>
             )}
 
             {listing.purpose && (
-              <span className="absolute left-4 top-4 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#1a1a1a]">
+              <span className="absolute left-4 top-4 rounded-full bg-surface px-3 py-1.5 text-xs font-bold text-ink">
                 {listing.purpose}
               </span>
             )}
@@ -219,14 +219,14 @@ export default function ListingDetailPage() {
                 <button
                   onClick={() => goPhoto(-1)}
                   aria-label="Previous photo"
-                  className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#1a1a1a] shadow-sm transition hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
+                  className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-surface/90 text-ink shadow-sm transition hover:bg-surface sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <ChevronLeft size={20} />
                 </button>
                 <button
                   onClick={() => goPhoto(1)}
                   aria-label="Next photo"
-                  className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#1a1a1a] shadow-sm transition hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
+                  className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-surface/90 text-ink shadow-sm transition hover:bg-surface sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <ChevronRight size={20} />
                 </button>
@@ -257,7 +257,7 @@ export default function ListingDetailPage() {
 
         {/* ── Summary (sticky on desktop) ──────────────────── */}
         <section className="lg:sticky lg:top-8 lg:self-start">
-          <div className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-7">
+          <div className="rounded-3xl border border-line bg-surface p-5 sm:p-7">
             <div className="flex flex-wrap items-center gap-2">
               {listing.type && (
                 <span className="rounded-full bg-secondary/10 px-3 py-1 text-xs font-bold text-secondary">
@@ -274,7 +274,7 @@ export default function ListingDetailPage() {
             <h1 className="mt-3 font-poppins text-2xl font-semibold leading-tight tracking-tight sm:text-[28px]">
               {listing.title}
             </h1>
-            <p className="mt-2 flex items-start gap-1.5 text-gray-500">
+            <p className="mt-2 flex items-start gap-1.5 text-muted">
               <MapPin size={16} className="mt-0.5 flex-shrink-0" />
               <span>
                 {listing.location?.street ? `${listing.location.street}, ` : ""}
@@ -283,10 +283,10 @@ export default function ListingDetailPage() {
             </p>
 
             <div className="mt-5 flex items-end gap-1.5">
-              <p className="font-poppins text-3xl font-semibold tracking-tight text-[#1a1a1a]">
+              <p className="font-poppins text-3xl font-semibold tracking-tight text-ink">
                 ₦{listing.price.toLocaleString()}
               </p>
-              <p className="pb-1 text-sm font-semibold text-gray-500">
+              <p className="pb-1 text-sm font-semibold text-muted">
                 / {listing.paymentType}
               </p>
             </div>
@@ -297,13 +297,13 @@ export default function ListingDetailPage() {
                 {facts.map(({ icon: Icon, label, value }) => (
                   <div
                     key={label}
-                    className="flex flex-col items-center rounded-2xl bg-[#f7f7f5] px-1 py-3 text-center"
+                    className="flex flex-col items-center rounded-2xl bg-subtle px-1 py-3 text-center"
                   >
                     <Icon size={18} className="text-secondary" />
                     <p className="mt-1.5 font-poppins text-base font-semibold">
                       {value ?? 0}
                     </p>
-                    <p className="text-[11px] font-semibold text-gray-500">
+                    <p className="text-[11px] font-semibold text-muted">
                       {label}
                     </p>
                   </div>
@@ -327,34 +327,34 @@ export default function ListingDetailPage() {
                 className={`flex h-[52px] w-[52px] flex-shrink-0 cursor-pointer items-center justify-center rounded-full border transition-colors disabled:opacity-60 ${
                   saved
                     ? "border-secondary bg-secondary/10"
-                    : "border-gray-200 bg-white hover:bg-gray-50"
+                    : "border-line-strong bg-surface hover:bg-subtle"
                 }`}
               >
                 <Bookmark
                   size={20}
                   fill={saved ? "#0a8754" : "none"}
-                  color={saved ? "#0a8754" : "#1a1a1a"}
+                  color={saved ? "#0a8754" : "var(--color-ink)"}
                 />
               </button>
             </div>
 
             {/* Agent */}
-            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-gray-200 p-4">
-              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#f7f7f5]">
-                <UserRound size={20} className="text-gray-400" />
+            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-line-strong p-4">
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-subtle">
+                <UserRound size={20} className="text-faint" />
               </span>
               <div className="min-w-0">
                 <p className="flex items-center gap-1.5 text-sm font-bold">
                   Verified agent
                   <BadgeCheck size={15} className="text-secondary" />
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   Send an inquiry to view agent details
                 </p>
               </div>
             </div>
 
-            <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-gray-500">
+            <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted">
               <Lock size={14} className="mt-0.5 flex-shrink-0 text-secondary" />
               Your contact details are shared with the agent only after they
               respond to your inquiry.
@@ -365,18 +365,18 @@ export default function ListingDetailPage() {
 
       {/* ── Details + amenities ─────────────────────────────── */}
       <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:mt-10 lg:grid-cols-2">
-        <section className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-7">
+        <section className="rounded-3xl border border-line bg-surface p-5 sm:p-7">
           <h2 className="font-poppins text-lg font-semibold">
             Property details
           </h2>
-          <dl className="mt-4 divide-y divide-gray-100">
+          <dl className="mt-4 divide-y divide-line">
             {infoRows.map((r) => (
               <div
                 key={r.label}
                 className="flex items-center justify-between gap-4 py-3 text-sm"
               >
-                <dt className="text-gray-500">{r.label}</dt>
-                <dd className="text-right font-semibold text-[#1a1a1a]">
+                <dt className="text-muted">{r.label}</dt>
+                <dd className="text-right font-semibold text-ink">
                   {r.value}
                 </dd>
               </div>
@@ -384,14 +384,14 @@ export default function ListingDetailPage() {
           </dl>
         </section>
 
-        <section className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-7">
+        <section className="rounded-3xl border border-line bg-surface p-5 sm:p-7">
           <h2 className="font-poppins text-lg font-semibold">Amenities</h2>
           {features.length > 0 ? (
             <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {features.map((amenity) => (
                 <li
                   key={amenity}
-                  className="flex items-center gap-3 rounded-2xl bg-[#f7f7f5] px-4 py-3 text-sm font-semibold"
+                  className="flex items-center gap-3 rounded-2xl bg-subtle px-4 py-3 text-sm font-semibold"
                 >
                   <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-secondary">
                     <Check size={13} strokeWidth={3} className="text-white" />
@@ -401,7 +401,7 @@ export default function ListingDetailPage() {
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-muted">
               The agent hasn&apos;t listed any amenities yet.
             </p>
           )}
@@ -432,9 +432,9 @@ export default function ListingDetailPage() {
               <div
                 key={l._id}
                 onClick={() => router.push(`/huttspotter/listing/${l._id}`)}
-                className="group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-auto"
+                className="group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-auto"
               >
-                <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                <div className="aspect-[4/3] overflow-hidden bg-subtle">
                   {l.media?.photos?.[0] ? (
                     <img
                       src={l.media.photos[0]}
@@ -442,7 +442,7 @@ export default function ListingDetailPage() {
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-gray-400">
+                    <div className="flex h-full w-full items-center justify-center text-faint">
                       <ImageOff size={22} />
                     </div>
                   )}
@@ -450,17 +450,17 @@ export default function ListingDetailPage() {
                 <div className="p-4">
                   <p className="line-clamp-1 font-semibold">{l.title}</p>
                   {l.location?.city && (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
+                    <p className="mt-1 flex items-center gap-1 text-sm text-muted">
                       <MapPin size={13} />
                       <span className="truncate">
                         {l.location.city}, {l.location.state}
                       </span>
                     </p>
                   )}
-                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
                     <p className="min-w-0 truncate font-poppins font-semibold">
                       ₦{l.price.toLocaleString()}
-                      <span className="font-nunito text-xs font-semibold text-gray-500">
+                      <span className="font-nunito text-xs font-semibold text-muted">
                         {" "}
                         / {l.paymentType}
                       </span>
@@ -484,32 +484,32 @@ export default function ListingDetailPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full rounded-t-3xl bg-white px-6 pb-10 pt-6 sm:max-w-[460px] sm:rounded-3xl sm:p-8"
+            className="w-full rounded-t-3xl bg-surface px-6 pb-10 pt-6 sm:max-w-[460px] sm:rounded-3xl sm:p-8"
           >
             {/* Handle (mobile) */}
-            <div className="mx-auto mb-6 h-1 w-10 rounded-full bg-gray-200 sm:hidden" />
+            <div className="mx-auto mb-6 h-1 w-10 rounded-full bg-skeleton sm:hidden" />
 
             {!inquirySent ? (
               <>
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <h2 className="font-poppins text-xl font-semibold text-[#1a1a1a]">
+                    <h2 className="font-poppins text-xl font-semibold text-ink">
                       Contact Agent
                     </h2>
-                    <p className="mt-0.5 truncate text-sm text-gray-500">
+                    <p className="mt-0.5 truncate text-sm text-muted">
                       About: {listing.title}
                     </p>
                   </div>
                   <button
                     onClick={() => setShowInquiryModal(false)}
                     aria-label="Close"
-                    className="flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+                    className="flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-faint hover:bg-subtle"
                   >
                     <X size={18} />
                   </button>
                 </div>
 
-                <p className="mb-4 flex items-start gap-2 rounded-2xl bg-[#f7f7f5] p-3 text-xs leading-relaxed text-gray-500">
+                <p className="mb-4 flex items-start gap-2 rounded-2xl bg-subtle p-3 text-xs leading-relaxed text-muted">
                   <Lock size={14} className="mt-0.5 flex-shrink-0 text-secondary" />
                   Your contact details will be shared with the agent only after
                   they respond to your inquiry.
@@ -520,11 +520,11 @@ export default function ListingDetailPage() {
                   onChange={(e) => setInquiryMessage(e.target.value)}
                   placeholder="Hi, I'm interested in this property. Is it still available?"
                   rows={4}
-                  className="mb-3 w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 text-[15px] outline-none transition-colors placeholder:text-gray-400 focus:border-secondary focus:ring-4 focus:ring-secondary/10"
+                  className="mb-3 w-full resize-none rounded-2xl border border-line-strong px-4 py-3 text-[15px] outline-none transition-colors placeholder:text-faint focus:border-secondary focus:ring-4 focus:ring-secondary/10"
                 />
 
                 {inquiryError && (
-                  <p className="mb-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">
+                  <p className="mb-3 rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-600">
                     {inquiryError}
                   </p>
                 )}
@@ -535,7 +535,7 @@ export default function ListingDetailPage() {
                   className={`flex h-13 w-full items-center justify-center gap-2 rounded-full py-3.5 text-[15px] font-semibold transition-colors ${
                     inquiryMessage.trim() && !sendingInquiry
                       ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
-                      : "cursor-not-allowed bg-gray-100 text-gray-400"
+                      : "cursor-not-allowed bg-subtle text-faint"
                   }`}
                 >
                   <Send size={16} />
@@ -548,10 +548,10 @@ export default function ListingDetailPage() {
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
                   <CheckCircle size={30} className="text-secondary" />
                 </div>
-                <h2 className="mb-2 font-poppins text-xl font-semibold text-[#1a1a1a]">
+                <h2 className="mb-2 font-poppins text-xl font-semibold text-ink">
                   Inquiry Sent!
                 </h2>
-                <p className="mb-6 text-sm leading-relaxed text-gray-500">
+                <p className="mb-6 text-sm leading-relaxed text-muted">
                   The agent will respond to your inquiry. You&apos;ll be
                   notified when they reply.
                 </p>

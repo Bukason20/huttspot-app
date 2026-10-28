@@ -28,29 +28,29 @@ function AgentLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (needsOnboarding) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
+      <div className="hs-themed flex min-h-screen items-center justify-center bg-canvas">
         <span className="h-7 w-7 animate-spin rounded-full border-2 border-secondary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#f7f7f5] font-nunito text-[#1a1a1a]">
+    <div className="hs-themed relative min-h-screen bg-canvas font-nunito text-ink transition-colors duration-300">
       {/* Desktop sidebar (lg+) */}
       <DesktopSideNav user={sideNavUser} />
 
       <div className="lg:pl-[264px]">
         {/* Top Navbar (mobile & tablet) */}
-        <nav className="sticky top-0 z-30 flex items-center justify-between bg-[#f7f7f5] px-5 py-4 sm:px-8 lg:hidden">
+        <nav className="sticky top-0 z-30 flex items-center justify-between bg-canvas px-5 py-4 sm:px-8 lg:hidden">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSideNavOpen(true)}
               aria-label="Open menu"
-              className="-ml-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full hover:bg-black/5"
+              className="-ml-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full hover:bg-ink/5"
             >
-              <Menu size={22} className="text-[#1a1a1a]" />
+              <Menu size={22} className="text-ink" />
             </button>
-            <img src={logo} alt="HuttSpot" className="h-7 w-auto" />
+            <img src={logo} alt="HuttSpot" className="theme-logo h-7 w-auto" />
           </div>
           {sideNavUser.avatar ? (
             <img

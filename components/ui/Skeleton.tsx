@@ -1,7 +1,7 @@
 // Base skeleton building block
 function SkeletonBox({ className = "" }: { className?: string }) {
   return (
-    <div className={`bg-gray-200 rounded-xl animate-pulse ${className}`} />
+    <div className={`bg-skeleton rounded-xl animate-pulse ${className}`} />
   );
 }
 
@@ -14,7 +14,7 @@ export function SkeletonText({ className = "" }: { className?: string }) {
 export function SkeletonAvatar({ size = 14 }: { size?: number }) {
   return (
     <div
-      className="rounded-full bg-gray-200 animate-pulse flex-shrink-0"
+      className="rounded-full bg-skeleton animate-pulse flex-shrink-0"
       style={{ width: size * 4, height: size * 4 }}
     />
   );
@@ -35,26 +35,26 @@ export function AgentDashboardSkeleton() {
             <SkeletonText className="w-20" />
           </div>
         </div>
-        <div className="h-12 w-full rounded-full bg-gray-200 sm:w-40" />
+        <div className="h-12 w-full rounded-full bg-skeleton sm:w-40" />
       </div>
 
       {/* Stats cards */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:mb-8">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-[136px] rounded-3xl bg-gray-200" />
+          <div key={i} className="h-[136px] rounded-3xl bg-skeleton" />
         ))}
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Listing rows */}
-        <div className="rounded-3xl border border-gray-100 bg-white p-4 sm:p-6">
+        <div className="rounded-3xl border border-line bg-surface p-4 sm:p-6">
           <div className="mb-4 flex items-center justify-between">
             <SkeletonText className="w-32" />
             <SkeletonText className="w-14" />
           </div>
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3 py-4">
-              <div className="h-20 w-20 flex-shrink-0 rounded-2xl bg-gray-200 sm:h-24 sm:w-28" />
+              <div className="h-20 w-20 flex-shrink-0 rounded-2xl bg-skeleton sm:h-24 sm:w-28" />
               <div className="flex flex-1 flex-col gap-2">
                 <SkeletonText className="w-16" />
                 <SkeletonText className="w-3/4" />
@@ -66,8 +66,8 @@ export function AgentDashboardSkeleton() {
 
         {/* Side column */}
         <div className="flex flex-col gap-6">
-          <div className="h-44 rounded-3xl bg-gray-200" />
-          <div className="h-44 rounded-3xl bg-gray-200" />
+          <div className="h-44 rounded-3xl bg-skeleton" />
+          <div className="h-44 rounded-3xl bg-skeleton" />
         </div>
       </div>
     </div>
@@ -85,14 +85,14 @@ export function HuttspotterDashboardSkeleton() {
           <SkeletonText className="h-7 w-56" />
         </div>
         <div className="flex w-full items-center gap-2 lg:max-w-md">
-          <div className="h-12 flex-1 rounded-full bg-gray-200" />
-          <div className="h-12 w-12 flex-shrink-0 rounded-full bg-gray-200" />
+          <div className="h-12 flex-1 rounded-full bg-skeleton" />
+          <div className="h-12 w-12 flex-shrink-0 rounded-full bg-skeleton" />
         </div>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_380px]">
         {/* Map */}
-        <div className="h-48 rounded-3xl bg-gray-200 sm:h-64 lg:order-2 lg:h-[calc(100vh-10rem)]" />
+        <div className="h-48 rounded-3xl bg-skeleton sm:h-64 lg:order-2 lg:h-[calc(100vh-10rem)]" />
 
         <div className="lg:order-1">
           {/* Section header */}
@@ -106,9 +106,9 @@ export function HuttspotterDashboardSkeleton() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="overflow-hidden rounded-2xl border border-gray-100 bg-white"
+                className="overflow-hidden rounded-2xl border border-line bg-surface"
               >
-                <div className="aspect-[4/3] bg-gray-200" />
+                <div className="aspect-[4/3] bg-skeleton" />
                 <div className="flex flex-col gap-2 p-3 sm:p-4">
                   <SkeletonText className="w-full" />
                   <SkeletonText className="w-2/3" />
@@ -130,7 +130,7 @@ export function ChatListSkeleton() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="flex items-center gap-3 px-5 py-4 border-b border-gray-50"
+          className="flex items-center gap-3 px-5 py-4 border-b border-line"
         >
           <SkeletonAvatar size={14} />
           <div className="flex-1 flex flex-col gap-2">
@@ -153,29 +153,29 @@ export function ChatMessagesSkeleton() {
     <div className="flex flex-col gap-4 px-4 py-4 animate-pulse">
       {/* Date pill */}
       <div className="flex justify-center">
-        <div className="h-5 w-16 bg-gray-200 rounded-full" />
+        <div className="h-5 w-16 bg-skeleton rounded-full" />
       </div>
 
       {/* Incoming */}
       <div className="flex items-end gap-2">
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0" />
-        <div className="h-12 w-48 bg-gray-200 rounded-2xl rounded-bl-sm" />
+        <div className="w-8 h-8 rounded-full bg-skeleton flex-shrink-0" />
+        <div className="h-12 w-48 bg-skeleton rounded-2xl rounded-bl-sm" />
       </div>
 
       {/* Outgoing */}
       <div className="flex items-end justify-end gap-2">
-        <div className="h-12 w-56 bg-gray-200 rounded-2xl rounded-br-sm" />
+        <div className="h-12 w-56 bg-skeleton rounded-2xl rounded-br-sm" />
       </div>
 
       {/* Incoming */}
       <div className="flex items-end gap-2">
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0" />
-        <div className="h-8 w-36 bg-gray-200 rounded-2xl rounded-bl-sm" />
+        <div className="w-8 h-8 rounded-full bg-skeleton flex-shrink-0" />
+        <div className="h-8 w-36 bg-skeleton rounded-2xl rounded-bl-sm" />
       </div>
 
       {/* Outgoing */}
       <div className="flex items-end justify-end gap-2">
-        <div className="h-16 w-52 bg-gray-200 rounded-2xl rounded-br-sm" />
+        <div className="h-16 w-52 bg-skeleton rounded-2xl rounded-br-sm" />
       </div>
     </div>
   );
@@ -187,29 +187,29 @@ export function ListingsSkeleton() {
     <div className="px-5 animate-pulse">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-8 h-8 bg-gray-200 rounded-full" />
+        <div className="w-8 h-8 bg-skeleton rounded-full" />
         <SkeletonText className="w-28" />
       </div>
 
       {/* Action buttons */}
       <div className="flex gap-3 mb-6">
-        <div className="flex-1 h-11 bg-gray-200 rounded-full" />
-        <div className="flex-1 h-11 bg-gray-200 rounded-full" />
+        <div className="flex-1 h-11 bg-skeleton rounded-full" />
+        <div className="flex-1 h-11 bg-skeleton rounded-full" />
       </div>
 
       {/* Listing cards */}
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-gray-100 rounded-2xl flex items-center gap-3 p-3 mb-3"
+          className="bg-subtle rounded-2xl flex items-center gap-3 p-3 mb-3"
         >
-          <div className="w-24 h-24 rounded-xl bg-gray-200 flex-shrink-0" />
+          <div className="w-24 h-24 rounded-xl bg-skeleton flex-shrink-0" />
           <div className="flex-1 flex flex-col gap-2">
             <SkeletonText className="w-full" />
             <SkeletonText className="w-1/2" />
             <div className="flex gap-2 mt-1">
-              <div className="h-6 w-14 rounded-full bg-gray-200" />
-              <div className="h-6 w-20 rounded-full bg-gray-200" />
+              <div className="h-6 w-14 rounded-full bg-skeleton" />
+              <div className="h-6 w-20 rounded-full bg-skeleton" />
             </div>
           </div>
         </div>
@@ -226,15 +226,15 @@ export function SavedListingsSkeleton() {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-gray-100 rounded-2xl flex items-center gap-3 p-3 mb-3"
+          className="bg-subtle rounded-2xl flex items-center gap-3 p-3 mb-3"
         >
-          <div className="w-24 h-20 rounded-xl bg-gray-200 flex-shrink-0" />
+          <div className="w-24 h-20 rounded-xl bg-skeleton flex-shrink-0" />
           <div className="flex-1 flex flex-col gap-2">
             <SkeletonText className="w-full" />
             <SkeletonText className="w-1/2" />
             <div className="flex gap-2 mt-1">
-              <div className="h-6 w-14 rounded-full bg-gray-200" />
-              <div className="h-6 w-24 rounded-full bg-gray-200" />
+              <div className="h-6 w-14 rounded-full bg-skeleton" />
+              <div className="h-6 w-24 rounded-full bg-skeleton" />
             </div>
           </div>
         </div>
@@ -249,41 +249,41 @@ export function ListingDetailSkeleton() {
     <div className="px-5 animate-pulse">
       {/* Back + breadcrumb */}
       <div className="mb-5 flex items-center gap-3 lg:mb-6">
-        <div className="h-10 w-10 rounded-full bg-gray-200" />
+        <div className="h-10 w-10 rounded-full bg-skeleton" />
         <SkeletonText className="w-48" />
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10">
         {/* Gallery */}
         <div>
-          <div className="aspect-[4/3] rounded-3xl bg-gray-200" />
+          <div className="aspect-[4/3] rounded-3xl bg-skeleton" />
           <div className="mt-3 flex gap-3 overflow-hidden">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="h-16 w-20 flex-shrink-0 rounded-xl bg-gray-200 sm:h-20 sm:w-28"
+                className="h-16 w-20 flex-shrink-0 rounded-xl bg-skeleton sm:h-20 sm:w-28"
               />
             ))}
           </div>
         </div>
 
         {/* Summary card */}
-        <div className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-7">
-          <div className="h-6 w-28 rounded-full bg-gray-200" />
+        <div className="rounded-3xl border border-line bg-surface p-5 sm:p-7">
+          <div className="h-6 w-28 rounded-full bg-skeleton" />
           <SkeletonText className="mt-4 h-7 w-4/5" />
           <SkeletonText className="mt-3 w-1/2" />
           <SkeletonText className="mt-6 h-8 w-40" />
           <div className="mt-6 grid grid-cols-4 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-[84px] rounded-2xl bg-gray-100" />
+              <div key={i} className="h-[84px] rounded-2xl bg-subtle" />
             ))}
           </div>
           <div className="mt-6 flex gap-3">
-            <div className="h-[52px] flex-1 rounded-full bg-gray-200" />
-            <div className="h-[52px] w-[52px] rounded-full bg-gray-200" />
+            <div className="h-[52px] flex-1 rounded-full bg-skeleton" />
+            <div className="h-[52px] w-[52px] rounded-full bg-skeleton" />
           </div>
-          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-gray-200 p-4">
-            <div className="h-11 w-11 rounded-full bg-gray-200" />
+          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-line-strong p-4">
+            <div className="h-11 w-11 rounded-full bg-skeleton" />
             <div className="flex flex-1 flex-col gap-2">
               <SkeletonText className="w-28" />
               <SkeletonText className="w-44" />
@@ -297,7 +297,7 @@ export function ListingDetailSkeleton() {
         {[1, 2].map((card) => (
           <div
             key={card}
-            className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-7"
+            className="rounded-3xl border border-line bg-surface p-5 sm:p-7"
           >
             <SkeletonText className="h-5 w-36" />
             <div className="mt-5 flex flex-col gap-4">
@@ -321,7 +321,7 @@ export function ProfileSkeleton() {
     <div className="px-5 animate-pulse">
       {/* Avatar */}
       <div className="flex flex-col items-center mb-8">
-        <div className="w-20 h-20 rounded-full bg-gray-200 mb-3" />
+        <div className="w-20 h-20 rounded-full bg-skeleton mb-3" />
         <SkeletonText className="w-28 mb-2" />
         <SkeletonText className="w-36" />
       </div>
@@ -330,11 +330,11 @@ export function ProfileSkeleton() {
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <div
           key={i}
-          className="flex items-center gap-4 bg-gray-50 rounded-2xl px-4 py-4 mb-3"
+          className="flex items-center gap-4 bg-subtle rounded-2xl px-4 py-4 mb-3"
         >
-          <div className="w-9 h-9 rounded-xl bg-gray-200" />
+          <div className="w-9 h-9 rounded-xl bg-skeleton" />
           <SkeletonText className="flex-1" />
-          <div className="w-4 h-4 bg-gray-200 rounded" />
+          <div className="w-4 h-4 bg-skeleton rounded" />
         </div>
       ))}
     </div>

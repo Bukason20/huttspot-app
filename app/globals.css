@@ -7,6 +7,37 @@
   --color-secondary: #0a8754;
   --color-tertiary: #505050;
   --color-tertiary-100: #57575726;
+
+  /* ── Surface tokens (dashboards). Light values here; dark values below. ── */
+  --color-canvas: #f7f7f5; /* page background */
+  --color-surface: #ffffff; /* cards, sidebar, modals */
+  --color-subtle: #f4f4f2; /* soft fills inside cards (chips, tiles) */
+  --color-cream: #f3efe6; /* warm accent tile */
+  --color-ink: #1a1a1a; /* main text, inverse buttons */
+  --color-on-ink: #ffffff; /* text on bg-ink */
+  --color-muted: #6b7280; /* secondary text */
+  --color-faint: #9ca3af; /* placeholders, tertiary text */
+  --color-line: #f0f0ee; /* hairline borders */
+  --color-line-strong: #e3e3e0; /* input / button borders */
+  --color-skeleton: #e7e7e4; /* skeleton blocks */
+}
+
+/* Dark theme — only inside the dashboards (elements with .hs-themed).
+   Brand primary / secondary stay the same; only neutrals change. */
+[data-theme="dark"] .hs-themed {
+  color-scheme: dark;
+  --color-canvas: #0e1311;
+  --color-surface: #161c19;
+  --color-subtle: #1e2622;
+  --color-cream: #2a2620;
+  --color-ink: #eef2f0;
+  --color-on-ink: #111614;
+  --color-muted: #9aa6a0;
+  --color-faint: #6f7b75;
+  --color-line: #232b27;
+  --color-line-strong: #303a35;
+  --color-skeleton: #252e2a;
+  --color-tertiary: #b9c2bd;
 }
 * {
   box-sizing: border-box;
@@ -121,4 +152,14 @@ body {
   .marquee-track {
     animation: none;
   }
+}
+
+/* Dark theme tweaks for things we can't recolour with tokens */
+[data-theme="dark"] .hs-themed .theme-logo {
+  /* lift the dark-green "Hutt" so the logo stays readable on dark */
+  filter: brightness(1.55) saturate(1.1);
+}
+[data-theme="dark"] .hs-themed .theme-map {
+  /* dark-styled Google Maps embed */
+  filter: invert(0.9) hue-rotate(180deg) brightness(0.95) contrast(0.9);
 }
