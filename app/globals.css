@@ -122,3 +122,126 @@ body {
     animation: none;
   }
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Dashboard dark mode
+   Turned on by the sidebar switch (sets <html data-theme="dark">) and only
+   applied inside the dashboards (.hs-themed). It recolours the existing
+   Tailwind classes, so the light design is untouched — if this block is
+   ever missing you simply get the normal light theme.
+   Brand primary / secondary colours are not changed.
+   ─────────────────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .hs-themed {
+  --dk-canvas: #0e1311;
+  --dk-surface: #161c19;
+  --dk-subtle: #1e2622;
+  --dk-cream: #2a2620;
+  --dk-ink: #eef2f0;
+  --dk-muted: #9aa6a0;
+  --dk-faint: #6f7b75;
+  --dk-line: #232b27;
+  --dk-line-strong: #303a35;
+  --dk-skeleton: #252e2a;
+  color-scheme: dark;
+}
+
+/* Page background (layout root, top bar, loader) */
+[data-theme="dark"] .hs-themed.bg-\[\#f7f7f5\],
+[data-theme="dark"] .hs-themed > nav.bg-\[\#f7f7f5\],
+[data-theme="dark"] .hs-themed nav.bg-\[\#f7f7f5\] {
+  background-color: var(--dk-canvas);
+}
+
+/* Cards, sidebar, bottom nav, modals */
+[data-theme="dark"] .hs-themed .bg-white,
+[data-theme="dark"] .hs-themed .hover\:bg-white:hover {
+  background-color: var(--dk-surface);
+}
+[data-theme="dark"] .hs-themed .bg-white\/90 {
+  background-color: color-mix(in srgb, var(--dk-surface) 90%, transparent);
+}
+
+/* Soft fills inside cards */
+[data-theme="dark"] .hs-themed .bg-\[\#f7f7f5\],
+[data-theme="dark"] .hs-themed .bg-\[\#f2f2f0\],
+[data-theme="dark"] .hs-themed .bg-gray-50,
+[data-theme="dark"] .hs-themed .bg-gray-100,
+[data-theme="dark"] .hs-themed .hover\:bg-gray-50:hover,
+[data-theme="dark"] .hs-themed .hover\:bg-gray-100:hover {
+  background-color: var(--dk-subtle);
+}
+[data-theme="dark"] .hs-themed .bg-\[\#f3efe6\] {
+  background-color: var(--dk-cream);
+}
+[data-theme="dark"] .hs-themed .bg-gray-200 {
+  background-color: var(--dk-skeleton);
+}
+[data-theme="dark"] .hs-themed .bg-red-50,
+[data-theme="dark"] .hs-themed .hover\:bg-red-50:hover {
+  background-color: rgb(239 68 68 / 0.12);
+}
+[data-theme="dark"] .hs-themed .hover\:bg-black\/5:hover {
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+/* Black buttons (View listing, New listing, filters, active tab) turn light */
+[data-theme="dark"] .hs-themed .bg-\[\#1a1a1a\]:not(.theme-keep) {
+  background-color: var(--dk-ink);
+  color: var(--dk-canvas);
+}
+[data-theme="dark"] .hs-themed .hover\:bg-black:not(.theme-keep):hover {
+  background-color: #ffffff;
+}
+[data-theme="dark"] .hs-themed .bg-\[\#1a1a1a\]:not(.theme-keep) svg[stroke="#fff"] {
+  stroke: var(--dk-canvas);
+}
+
+/* Text */
+[data-theme="dark"] .hs-themed.text-\[\#1a1a1a\],
+[data-theme="dark"] .hs-themed .text-\[\#1a1a1a\],
+[data-theme="dark"] .hs-themed .hover\:text-\[\#1a1a1a\]:hover {
+  color: var(--dk-ink);
+}
+[data-theme="dark"] .hs-themed .text-gray-500,
+[data-theme="dark"] .hs-themed .hover\:text-gray-600:hover {
+  color: var(--dk-muted);
+}
+[data-theme="dark"] .hs-themed .text-gray-400,
+[data-theme="dark"] .hs-themed .text-gray-300 {
+  color: var(--dk-faint);
+}
+[data-theme="dark"] .hs-themed .placeholder\:text-gray-400::placeholder {
+  color: var(--dk-faint);
+}
+[data-theme="dark"] .hs-themed .text-tertiary {
+  color: #b9c2bd;
+}
+/* Icons drawn with a fixed dark stroke (empty heart / bookmark) */
+[data-theme="dark"] .hs-themed svg[stroke="#1a1a1a"] {
+  stroke: var(--dk-ink);
+}
+
+/* Borders */
+[data-theme="dark"] .hs-themed .border-gray-50,
+[data-theme="dark"] .hs-themed .border-gray-100,
+[data-theme="dark"] .hs-themed .divide-gray-100 > :not(:last-child) {
+  border-color: var(--dk-line);
+}
+[data-theme="dark"] .hs-themed .border-gray-200,
+[data-theme="dark"] .hs-themed .border-gray-300 {
+  border-color: var(--dk-line-strong);
+}
+[data-theme="dark"] .hs-themed .hover\:border-gray-300:hover {
+  border-color: var(--dk-faint);
+}
+[data-theme="dark"] .hs-themed .border-white {
+  border-color: var(--dk-surface);
+}
+
+/* Logo (lift the dark-green "Hutt") and the Google Map embed */
+[data-theme="dark"] .hs-themed img[alt="HuttSpot"] {
+  filter: brightness(1.55) saturate(1.1);
+}
+[data-theme="dark"] .hs-themed iframe[src*="maps.google"] {
+  filter: invert(0.9) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}

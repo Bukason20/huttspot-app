@@ -321,7 +321,7 @@ export default function AgentDashboardPage() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-[#1a1a1a] p-5 text-white sm:p-6">
+          <div className="theme-keep rounded-3xl bg-[#1a1a1a] p-5 text-white sm:p-6">
             <p className="font-poppins text-lg font-semibold leading-snug">
               Got a new property?
             </p>

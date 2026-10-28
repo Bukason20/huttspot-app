@@ -30,14 +30,14 @@ function HuttspotterLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (needsOnboarding) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
+      <div className="hs-themed flex min-h-screen items-center justify-center bg-[#f7f7f5]">
         <span className="h-7 w-7 animate-spin rounded-full border-2 border-secondary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-[#f7f7f5] font-nunito text-[#1a1a1a]">
+    <div className="hs-themed relative min-h-screen bg-[#f7f7f5] font-nunito text-[#1a1a1a]">
       {/* Desktop sidebar (lg+) */}
       <HuttspotterDesktopNav user={navUser} />
 
