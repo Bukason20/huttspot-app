@@ -8,7 +8,11 @@ import { useOnboarding } from "@/context/OnboardingContext";
 // Display-only list of onboarding steps (routing lives in each page)
 const ALL_STEPS = [
   { path: "/onboarding/account-mode", label: "Account type" },
-  { path: "/onboarding/looking-for", label: "What you're looking for", huttspotterOnly: true },
+  {
+    path: "/onboarding/looking-for",
+    label: "What you're looking for",
+    huttspotterOnly: true,
+  },
   { path: "/onboarding/gender", label: "Gender" },
   { path: "/onboarding/phone", label: "Phone number" },
   { path: "/onboarding/how-found", label: "How you found us" },
@@ -69,7 +73,11 @@ export default function OnboardingShell({
                       </span>
                       <span
                         className={`text-[15px] font-semibold transition-colors ${
-                          active ? "text-white" : done ? "text-white/85" : "text-white/55"
+                          active
+                            ? "text-white"
+                            : done
+                              ? "text-white/85"
+                              : "text-white/55"
                         }`}
                       >
                         {s.label}
@@ -81,13 +89,16 @@ export default function OnboardingShell({
             )}
           </div>
 
-          <div className="relative flex-1 h-full">
-            <div className="absolute -bottom-[30%] -right-[10%] aspect-square h-[120%] rounded-full border border-white/15" />
-            <div className="absolute -bottom-[30%] -right-[10%] aspect-square h-[85%] rounded-full border border-white/15" />
+          {/* Illustration: absolutely positioned against the panel itself
+              (not the space left under the step list), so it keeps the same
+              size on short laptop screens. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -bottom-[18%] -right-[14%] aspect-square h-[78%] rounded-full border border-white/15" />
+            <div className="absolute -bottom-[18%] -right-[14%] aspect-square h-[56%] rounded-full border border-white/15" />
             <img
               src={authImg3}
               alt=""
-              className="absolute bottom-0 right-6 h-full max-h-[340px] w-auto object-contain object-bottom"
+              className="absolute bottom-0 right-4 h-[min(72%,560px)] w-auto max-w-none object-contain object-bottom xl:right-8"
             />
           </div>
         </div>

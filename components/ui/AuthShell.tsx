@@ -42,7 +42,7 @@ export default function AuthShell({
             tone === "secondary" ? "bg-secondary" : "bg-primary"
           }`}
         >
-          <div className="p-10 xl:p-12">
+          <div className="relative z-10 p-10 xl:p-12">
             <h2 className="max-w-md font-poppins text-[34px] font-semibold leading-tight tracking-tight text-white xl:text-[40px]">
               {panelHeading}
             </h2>
@@ -51,22 +51,25 @@ export default function AuthShell({
             </p>
           </div>
 
-          <div className="relative flex-1">
-            <div className="absolute bottom-[-20%] left-1/2 h-[110%] aspect-square -translate-x-1/2 rounded-full border border-white/20" />
-            <div className="absolute bottom-[-20%] left-1/2 h-[80%] aspect-square -translate-x-1/2 rounded-full border border-white/20" />
+          {/* Illustration: absolutely positioned against the panel itself,
+              so it keeps its size on short laptop screens. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -bottom-[16%] left-1/2 aspect-square h-[72%] -translate-x-1/2 rounded-full border border-white/20" />
+            <div className="absolute -bottom-[16%] left-1/2 aspect-square h-[50%] -translate-x-1/2 rounded-full border border-white/20" />
             <img
               src={image}
               alt=""
-              className="absolute bottom-0 left-1/2 h-full max-h-[520px] w-auto max-w-none -translate-x-1/2 object-contain object-bottom"
+              className="absolute bottom-0 left-1/2 h-[min(64%,540px)] w-auto max-w-none -translate-x-1/2 object-contain object-bottom"
             />
-            <div className="absolute bottom-8 right-8 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
-              <BadgeCheck size={20} className="text-secondary" />
-              <div>
-                <p className="text-sm font-bold leading-tight">
-                  Verified agents
-                </p>
-                <p className="text-xs text-gray-500">Port Harcourt</p>
-              </div>
+          </div>
+
+          <div className="absolute bottom-8 right-8 z-10 flex items-center gap-2.5 rounded-2xl bg-white px-4 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+            <BadgeCheck size={20} className="text-secondary" />
+            <div>
+              <p className="text-sm font-bold leading-tight">
+                Verified agents
+              </p>
+              <p className="text-xs text-gray-500">Port Harcourt</p>
             </div>
           </div>
         </div>
