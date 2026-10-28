@@ -33,36 +33,12 @@ import {
   room,
 } from "@/assets";
 import Reveal from "@/components/ui/Reveal";
+import {
+  PROPERTY_CATEGORIES,
+  categoryFor,
+  categoryRank,
+} from "@/lib/categories";
 
-// Property type categories — matches your backend types
-const PROPERTY_CATEGORIES = [
-  "Self-Contained",
-  "Flat / Apartment",
-  "Shop",
-  "Duplex",
-  "Bungalow",
-  "Office Space",
-  "Land",
-  "Room",
-];
-
-// Backend type values that belong to one of the categories above
-const TYPE_ALIASES: Record<string, string> = {
-  apartment: "Flat / Apartment",
-  flat: "Flat / Apartment",
-  "self contained": "Self-Contained",
-  "self-con": "Self-Contained",
-  office: "Office Space",
-};
-
-const categoryFor = (type?: string) => {
-  const raw = (type ?? "").trim();
-  if (!raw) return "Other";
-  const known = PROPERTY_CATEGORIES.find(
-    (c) => c.toLowerCase() === raw.toLowerCase(),
-  );
-  return known ?? TYPE_ALIASES[raw.toLowerCase()] ?? raw;
-};
 
 // Landing page content (UI only)
 const HOW_STEPS = [
@@ -203,8 +179,8 @@ export default function HomePage() {
       gatedRoute(
         session,
         type
-          ? `/huttspotter/dashboard?type=${encodeURIComponent(type)}`
-          : "/huttspotter/dashboard",
+          ? `/huttspotter/listings?type=${encodeURIComponent(type)}`
+          : "/huttspotter/listings",
       ),
     );
 
@@ -216,10 +192,7 @@ export default function HomePage() {
       const key = categoryFor(p.type);
       map.set(key, [...(map.get(key) ?? []), p]);
     });
-    const rank = (t: string) => {
-      const i = PROPERTY_CATEGORIES.indexOf(t);
-      return i === -1 ? PROPERTY_CATEGORIES.length : i;
-    };
+    const rank = categoryRank;
     return [...map.entries()]
       .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b))
       .map(([title, properties]) => ({ title, properties }));

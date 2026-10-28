@@ -1,11 +1,16 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Bookmark, MessageCircle, LayoutGrid } from "lucide-react";
+import { Home, Building, MessageCircle, LayoutGrid } from "lucide-react";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/huttspotter/dashboard" },
-  { icon: Bookmark, label: "Saved", path: "/huttspotter/saved" },
+  {
+    icon: Building,
+    label: "Listings",
+    path: "/huttspotter/listings",
+    match: ["/huttspotter/listings", "/huttspotter/listing/", "/huttspotter/saved"],
+  },
   { icon: MessageCircle, label: "Chat", path: "/huttspotter/chat" },
   { icon: LayoutGrid, label: "More", path: "/huttspotter/more" },
 ];
@@ -18,7 +23,11 @@ export function HuttspotterBottomNav() {
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
       <div className="mx-auto flex max-w-md items-center justify-around px-4 py-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.path;
+          const paths = "match" in item && item.match ? item.match : [item.path];
+          // Exact match, or prefix match for entries ending in "/"
+          const isActive = paths.some((p) =>
+            p.endsWith("/") ? pathname?.startsWith(p) : pathname === p,
+          );
           const Icon = item.icon;
 
           return (

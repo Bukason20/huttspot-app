@@ -133,7 +133,7 @@ export default function PropertySection({
             onSeeAll
               ? onSeeAll(title)
               : router.push(
-                  `/huttspotter/dashboard?type=${encodeURIComponent(title)}`,
+                  `/huttspotter/listings?type=${encodeURIComponent(title)}`,
                 )
           }
           className="group flex flex-shrink-0 cursor-pointer items-center gap-1.5 text-sm font-semibold text-secondary"

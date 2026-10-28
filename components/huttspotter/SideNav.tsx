@@ -5,7 +5,7 @@ import {
   LayoutGrid,
   MessageCircle,
   Star,
-  Bookmark,
+  Building,
   MapPin,
   Settings,
   X,
@@ -20,7 +20,13 @@ const navItems = [
   { icon: LayoutGrid, label: "Dashboard", path: "/huttspotter/dashboard" },
   { icon: MessageCircle, label: "Chat", path: "/huttspotter/chat" },
   { icon: Star, label: "Subscription", path: "/huttspotter/subscription" },
-  { icon: Bookmark, label: "Saved Listings", path: "/huttspotter/saved" },
+  {
+    icon: Building,
+    label: "Listings",
+    path: "/huttspotter/listings",
+    // Also active on a listing's details page and the old saved page
+    match: ["/huttspotter/listings", "/huttspotter/listing/", "/huttspotter/saved"],
+  },
   { icon: MapPin, label: "Location", path: "/huttspotter/location" },
   { icon: Settings, label: "Settings", path: "/huttspotter/settings" },
 ];
@@ -81,7 +87,8 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex flex-col gap-1">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = pathname?.startsWith(item.path);
+        const paths = "match" in item && item.match ? item.match : [item.path];
+        const isActive = paths.some((p) => pathname?.startsWith(p));
         return (
           <button
             key={item.path}

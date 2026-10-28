@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Heart, SlidersHorizontal, MapPin } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowRight } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { getAllProperties } from "@/lib/properties";
-import { toggleSaveProperty } from "@/lib/userProperties";
+import { useSavedListings } from "@/lib/useSavedListings";
+import ListingCard from "@/components/huttspotter/ListingCard";
 import { Property } from "@/lib/types";
 import { HuttspotterDashboardSkeleton } from "@/components/ui";
 
@@ -16,8 +17,8 @@ export default function HuttspotterDashboard() {
   const [listings, setListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [savedIds, setSavedIds] = useState<string[]>([]);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  // Saved state comes from the API, so hearts stay filled after a refresh
+  const { isSaved, toggle } = useSavedListings();
 
   useEffect(() => {
     const fetch = async () => {
@@ -32,22 +33,6 @@ export default function HuttspotterDashboard() {
     };
     fetch();
   }, []);
-
-  const handleToggleSave = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (savingId) return;
-    setSavingId(id);
-    try {
-      await toggleSaveProperty(id);
-      setSavedIds((prev) =>
-        prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-      );
-    } catch (err) {
-      console.error("Failed to save listing:", err);
-    } finally {
-      setSavingId(null);
-    }
-  };
 
   const filtered = listings.filter(
     (l) =>
@@ -118,8 +103,15 @@ export default function HuttspotterDashboard() {
                 {filtered.length}
               </span>
             </h2>
-            <button className="cursor-pointer text-sm font-semibold text-secondary hover:underline">
+            <button
+              onClick={() => router.push("/huttspotter/listings")}
+              className="group flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-secondary"
+            >
               See all
+              <ArrowRight
+                size={15}
+                className="transition-transform group-hover:translate-x-0.5"
+              />
             </button>
           </div>
 
@@ -133,71 +125,14 @@ export default function HuttspotterDashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-2 2xl:grid-cols-3">
-              {filtered.map((listing) => {
-                const coverPhoto = listing.media?.photos?.[0];
-                const isSaved = savedIds.includes(listing._id);
-
-                return (
-                  <div
-                    key={listing._id}
-                    onClick={() =>
-                      router.push(`/huttspotter/listing/${listing._id}`)
-                    }
-                    className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
-                  >
-                    {/* Image */}
-                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-                      {coverPhoto ? (
-                        <img
-                          src={coverPhoto}
-                          alt={listing.title}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <span className="text-xs text-gray-400">No photo</span>
-                        </div>
-                      )}
-
-                      {/* Save button */}
-                      <button
-                        onClick={(e) => handleToggleSave(e, listing._id)}
-                        aria-label={isSaved ? "Remove from saved" : "Save listing"}
-                        className="heart-btn absolute right-2 top-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white sm:right-3 sm:top-3"
-                      >
-                        <Heart
-                          size={15}
-                          fill={isSaved ? "#ff6b35" : "none"}
-                          color={isSaved ? "#ff6b35" : "#1a1a1a"}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Info */}
-                    <div className="p-3 sm:p-4">
-                      <p className="line-clamp-1 text-sm font-semibold text-[#1a1a1a] sm:text-[15px]">
-                        {listing.title}
-                      </p>
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500 sm:text-sm">
-                        <MapPin size={12} className="flex-shrink-0" />
-                        <span className="truncate">
-                          {listing.location?.city ?? ""}
-                          {listing.location?.state
-                            ? `, ${listing.location.state}`
-                            : ""}
-                        </span>
-                      </p>
-                      <p className="mt-2 font-poppins text-sm font-semibold text-secondary sm:text-base">
-                        ₦{listing.price.toLocaleString()}
-                        <span className="font-nunito text-xs font-semibold text-gray-500">
-                          {" "}
-                          / {listing.paymentType}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+              {filtered.map((listing) => (
+                <ListingCard
+                  key={listing._id}
+                  listing={listing}
+                  saved={isSaved(listing._id)}
+                  onToggleSave={(l) => toggle(l._id, l)}
+                />
+              ))}
             </div>
           )}
         </section>

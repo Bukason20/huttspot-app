@@ -25,7 +25,7 @@ export default function HuttspotterSettingsPage() {
       label: "Personal info",
       path: "/huttspotter/settings/personal-info",
     },
-    { icon: Bookmark, label: "Saved Listings", path: "/huttspotter/saved" },
+    { icon: Bookmark, label: "Saved Listings", path: "/huttspotter/listings?tab=saved" },
     {
       icon: MapPin,
       label: "Addresses",
