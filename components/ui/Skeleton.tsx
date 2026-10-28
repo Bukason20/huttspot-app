@@ -243,57 +243,73 @@ export function SavedListingsSkeleton() {
   );
 }
 
-// Listing detail page
+// Listing detail page — mirrors app/huttspotter/listing/[id]/page.tsx
 export function ListingDetailSkeleton() {
   return (
-    <div className="animate-pulse">
-      {/* Main image */}
-      <div className="h-56 bg-gray-200" />
-
-      {/* Thumbnails */}
-      <div className="flex gap-2 px-4 py-3">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="w-20 h-16 rounded-xl bg-gray-200 flex-shrink-0"
-          />
-        ))}
+    <div className="px-5 animate-pulse">
+      {/* Back + breadcrumb */}
+      <div className="mb-5 flex items-center gap-3 lg:mb-6">
+        <div className="h-10 w-10 rounded-full bg-gray-200" />
+        <SkeletonText className="w-48" />
       </div>
 
-      <div className="px-5">
-        {/* Title */}
-        <SkeletonText className="w-3/4 h-5 mb-2" />
-        <SkeletonText className="w-1/2 mb-4" />
-
-        {/* CTA buttons */}
-        <div className="flex gap-3 mb-6">
-          <div className="flex-1 h-12 bg-gray-200 rounded-full" />
-          <div className="flex-1 h-12 bg-gray-200 rounded-full" />
-        </div>
-
-        {/* Agent card */}
-        <div className="bg-gray-100 rounded-2xl p-4 flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-full bg-gray-200" />
-          <div className="flex-1 flex flex-col gap-2">
-            <SkeletonText className="w-24" />
-            <SkeletonText className="w-16" />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10">
+        {/* Gallery */}
+        <div>
+          <div className="aspect-[4/3] rounded-3xl bg-gray-200" />
+          <div className="mt-3 flex gap-3 overflow-hidden">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-16 w-20 flex-shrink-0 rounded-xl bg-gray-200 sm:h-20 sm:w-28"
+              />
+            ))}
           </div>
         </div>
 
-        {/* Detail chips */}
-        <div className="flex gap-3 mb-5">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-14 w-16 bg-gray-200 rounded-xl" />
-          ))}
+        {/* Summary card */}
+        <div className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-7">
+          <div className="h-6 w-28 rounded-full bg-gray-200" />
+          <SkeletonText className="mt-4 h-7 w-4/5" />
+          <SkeletonText className="mt-3 w-1/2" />
+          <SkeletonText className="mt-6 h-8 w-40" />
+          <div className="mt-6 grid grid-cols-4 gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-[84px] rounded-2xl bg-gray-100" />
+            ))}
+          </div>
+          <div className="mt-6 flex gap-3">
+            <div className="h-[52px] flex-1 rounded-full bg-gray-200" />
+            <div className="h-[52px] w-[52px] rounded-full bg-gray-200" />
+          </div>
+          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-gray-200 p-4">
+            <div className="h-11 w-11 rounded-full bg-gray-200" />
+            <div className="flex flex-1 flex-col gap-2">
+              <SkeletonText className="w-28" />
+              <SkeletonText className="w-44" />
+            </div>
+          </div>
         </div>
+      </div>
 
-        {/* Amenities */}
-        <SkeletonText className="w-20 h-4 mb-3" />
-        <div className="flex flex-wrap gap-x-8 gap-y-3 mb-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <SkeletonText key={i} className="w-24" />
-          ))}
-        </div>
+      {/* Details + amenities */}
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:mt-10 lg:grid-cols-2">
+        {[1, 2].map((card) => (
+          <div
+            key={card}
+            className="rounded-3xl border border-gray-100 bg-white p-5 sm:p-7"
+          >
+            <SkeletonText className="h-5 w-36" />
+            <div className="mt-5 flex flex-col gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex justify-between">
+                  <SkeletonText className="w-24" />
+                  <SkeletonText className="w-20" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
