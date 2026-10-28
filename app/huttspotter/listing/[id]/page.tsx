@@ -25,7 +25,7 @@ import {
   SearchX,
 } from "lucide-react";
 import { getPropertyById } from "@/lib/properties";
-import { toggleSaveProperty } from "@/lib/userProperties";
+import { useSavedListings } from "@/lib/useSavedListings";
 import { sendInquiry } from "@/lib/chat";
 import { getAllProperties } from "@/lib/properties";
 import { Property } from "@/lib/types";
@@ -40,8 +40,9 @@ export default function ListingDetailPage() {
   const [otherListings, setOtherListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
+  // Saved state is loaded from the API so the bookmark is right after refresh
+  const { isSaved, toggle } = useSavedListings();
+  const saved = isSaved(id);
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   // Inquiry modal state
@@ -71,17 +72,8 @@ export default function ListingDetailPage() {
     fetch();
   }, [id]);
 
-  const handleToggleSave = async () => {
-    if (saving) return;
-    setSaving(true);
-    try {
-      await toggleSaveProperty(id);
-      setSaved(!saved);
-    } catch (err) {
-      console.error("Failed to toggle save:", err);
-    } finally {
-      setSaving(false);
-    }
+  const handleToggleSave = () => {
+    toggle(id, listing ?? undefined);
   };
 
   const handleSendInquiry = async () => {
@@ -184,7 +176,7 @@ export default function ListingDetailPage() {
         </button>
         <nav className="flex min-w-0 items-center gap-1.5 text-sm text-gray-500">
           <button
-            onClick={() => router.push("/huttspotter/dashboard")}
+            onClick={() => router.push("/huttspotter/listings")}
             className="cursor-pointer hover:text-[#1a1a1a]"
           >
             Listings
@@ -330,7 +322,6 @@ export default function ListingDetailPage() {
               </button>
               <button
                 onClick={handleToggleSave}
-                disabled={saving}
                 aria-label={saved ? "Remove from saved" : "Save listing"}
                 aria-pressed={saved}
                 className={`flex h-[52px] w-[52px] flex-shrink-0 cursor-pointer items-center justify-center rounded-full border transition-colors disabled:opacity-60 ${
@@ -425,7 +416,7 @@ export default function ListingDetailPage() {
               You might also like
             </h2>
             <button
-              onClick={() => router.push("/huttspotter/dashboard")}
+              onClick={() => router.push("/huttspotter/listings")}
               className="group flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-secondary"
             >
               View all
@@ -435,12 +426,13 @@ export default function ListingDetailPage() {
               />
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {/* Mobile: one swipeable row. sm+: grid */}
+          <div className="scrollbar-hide -mx-5 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-3">
             {otherListings.map((l) => (
               <div
                 key={l._id}
                 onClick={() => router.push(`/huttspotter/listing/${l._id}`)}
-                className="group cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+                className="group w-[78%] flex-shrink-0 cursor-pointer snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:w-auto"
               >
                 <div className="aspect-[4/3] overflow-hidden bg-gray-100">
                   {l.media?.photos?.[0] ? (
