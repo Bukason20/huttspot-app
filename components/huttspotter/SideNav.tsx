@@ -13,8 +13,8 @@ import {
   Sun,
   LogOut,
 } from "lucide-react";
-import { useState } from "react";
 import { logo } from "@/assets";
+import { useTheme } from "@/lib/theme";
 
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", path: "/huttspotter/dashboard" },
@@ -112,11 +112,15 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  // Shared, saved theme (lib/theme.ts) — every toggle stays in sync
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+  const setIsDark = (dark: boolean) => setTheme(dark ? "dark" : "light");
   return (
     <div className="grid grid-cols-2 gap-1 rounded-full bg-[#f2f2f0] p-1">
       <button
         onClick={() => setIsDark(false)}
+        aria-pressed={!isDark}
         className={`flex h-9 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors ${
           !isDark ? "bg-white text-[#1a1a1a] shadow-sm" : "text-gray-500"
         }`}
@@ -125,8 +129,9 @@ function ThemeToggle() {
       </button>
       <button
         onClick={() => setIsDark(true)}
+        aria-pressed={isDark}
         className={`flex h-9 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors ${
-          isDark ? "bg-[#1a1a1a] text-white" : "text-gray-500"
+          isDark ? "bg-secondary text-white shadow-sm" : "text-gray-500"
         }`}
       >
         <Moon size={15} /> Dark
