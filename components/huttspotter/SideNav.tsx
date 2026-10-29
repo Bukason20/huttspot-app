@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { logo } from "@/assets";
 import { useTheme } from "@/lib/theme";
+import { useSubscription } from "@/lib/subscription";
 
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", path: "/huttspotter/dashboard" },
@@ -82,6 +83,8 @@ function UserCard({ user }: { user: SideNavUser }) {
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { subscription } = useSubscription();
+  const points = subscription?.active ? subscription.points : null;
 
   return (
     <nav className="flex flex-col gap-1">
@@ -104,6 +107,17 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           >
             <Icon size={19} />
             {item.label}
+            {item.path === "/huttspotter/subscription" && points !== null && (
+              <span
+                className={`ml-auto rounded-full px-2 py-0.5 text-xs font-bold ${
+                  points > 0
+                    ? "bg-secondary/10 text-secondary"
+                    : "bg-primary/10 text-primary"
+                }`}
+              >
+                {points} {points === 1 ? "pt" : "pts"}
+              </span>
+            )}
           </button>
         );
       })}
