@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Bath,
   BedDouble,
+  Check,
   CircleAlert,
   ImageOff,
   MapPin,
@@ -14,7 +15,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { getAgentProperties } from "@/lib/agent";
+import { deleteProperty, getAgentProperties } from "@/lib/agent";
 import { PropertyResponse } from "@/lib/types";
 import { useListing } from "@/context/ListingContext";
 import {
@@ -47,6 +48,9 @@ export default function MyListingsPage() {
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<PropertyResponse | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -62,10 +66,55 @@ export default function MyListingsPage() {
     fetchListings();
   }, []);
 
-  const handleRemoveSingle = (id: string) => {
-    // TODO: Add single delete API call here
-    setListings((prev) => prev.filter((l) => l._id !== id));
+  const openDelete = (listing: PropertyResponse) => {
+    setDeleteError("");
+    setConfirmDelete(listing);
   };
+
+  const closeDelete = () => {
+    if (deleting) return; // don't close mid-request
+    setConfirmDelete(null);
+    setDeleteError("");
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete || deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await deleteProperty(confirmDelete._id);
+      setListings((prev) => prev.filter((l) => l._id !== confirmDelete._id));
+      setNotice("Listing deleted");
+      setConfirmDelete(null);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      setDeleteError(
+        status === 403
+          ? "You can only delete listings you own."
+          : status === 404
+            ? "This listing no longer exists. Refresh the page."
+            : err?.response?.data?.message ||
+              "Couldn't delete the listing. Please try again.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Hide the success notice after a few seconds
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(""), 4000);
+    return () => clearTimeout(t);
+  }, [notice]);
+
+  // Escape closes the dialog
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeDelete();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const handleResume = (listing: PropertyResponse) => {
     // Pre-populate context with existing data so forms are pre-filled
@@ -229,8 +278,8 @@ export default function MyListingsPage() {
                     {listing.isPublished ? "Live" : "Draft"}
                   </span>
                   <button
-                    onClick={() => setConfirmDelete(listing)}
-                    aria-label="Remove listing"
+                    onClick={() => openDelete(listing)}
+                    aria-label="Delete listing"
                     className="absolute right-3 top-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/70"
                   >
                     <Trash2 size={14} />
@@ -311,39 +360,101 @@ export default function MyListingsPage() {
       {confirmDelete && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:px-6"
-          onClick={() => setConfirmDelete(null)}
+          onClick={closeDelete}
         >
           <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-title"
             onClick={(e) => e.stopPropagation()}
-            className="w-full rounded-t-3xl bg-white px-6 pb-10 pt-6 sm:max-w-[420px] sm:rounded-3xl sm:p-8"
+            className="w-full rounded-t-3xl bg-white px-6 pb-10 pt-6 sm:max-w-[440px] sm:rounded-3xl sm:p-8"
           >
             <div className="mx-auto mb-6 h-1 w-10 rounded-full bg-gray-200 sm:hidden" />
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-              <CircleAlert size={22} className="text-red-500" />
-            </span>
-            <h2 className="mt-4 font-poppins text-xl font-semibold">Remove this listing?</h2>
+            <div className="flex items-center gap-3 rounded-2xl border border-gray-100 p-2.5">
+              {confirmDelete.media?.photos?.[0] ? (
+                <img
+                  src={confirmDelete.media.photos[0]}
+                  alt=""
+                  className="h-14 w-14 flex-shrink-0 rounded-xl object-cover"
+                />
+              ) : (
+                <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-[#f7f7f5] text-gray-400">
+                  <ImageOff size={18} />
+                </span>
+              )}
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold">{confirmDelete.title}</span>
+                <span className="block text-xs text-gray-500">
+                  {confirmDelete.isPublished ? "Live listing" : "Draft"} · ₦
+                  {confirmDelete.price.toLocaleString()}
+                </span>
+              </span>
+            </div>
+
+            <h2 id="delete-title" className="mt-5 font-poppins text-xl font-semibold">
+              Delete this listing?
+            </h2>
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
-              <span className="font-bold text-[#1a1a1a]">{confirmDelete.title}</span>{" "}
-              will no longer be visible to huttspotters.
+              This can&apos;t be undone. The listing will be removed for good, along
+              with any saves and inquiries on it.
             </p>
+            <p className="mt-2 text-sm leading-relaxed text-gray-500">
+              Your chats with huttspotters stay, but they&apos;ll show the listing as deleted.
+            </p>
+
+            {deleteError && (
+              <p className="mt-4 flex items-start gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                <CircleAlert size={16} className="mt-0.5 flex-shrink-0" />
+                {deleteError}
+              </p>
+            )}
+
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row">
               <button
-                onClick={() => setConfirmDelete(null)}
-                className="h-12 flex-1 cursor-pointer rounded-full border border-gray-200 bg-white text-sm font-semibold hover:bg-gray-50"
+                onClick={closeDelete}
+                disabled={deleting}
+                className="h-12 w-full cursor-pointer rounded-full border border-gray-200 bg-white text-sm font-semibold hover:bg-gray-50 sm:flex-1 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Keep it
               </button>
               <button
-                onClick={() => {
-                  handleRemoveSingle(confirmDelete._id);
-                  setConfirmDelete(null);
-                }}
-                className="h-12 flex-1 cursor-pointer rounded-full bg-red-500 text-sm font-semibold text-white transition-colors hover:bg-red-600"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-red-500 sm:flex-1 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Remove
+                {deleting ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} /> Delete listing
+                  </>
+                )}
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Success notice */}
+      {notice && (
+        <div
+          role="status"
+          className="theme-keep fixed inset-x-4 bottom-24 z-50 mx-auto flex max-w-sm items-center gap-3 rounded-2xl bg-[#1a1a1a] px-4 py-3 text-sm font-semibold text-white lg:bottom-8"
+        >
+          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-secondary">
+            <Check size={13} strokeWidth={3} />
+          </span>
+          <span className="min-w-0 flex-1 truncate">{notice}</span>
+          <button
+            onClick={() => setNotice("")}
+            aria-label="Dismiss"
+            className="cursor-pointer text-white/60 hover:text-white"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
     </div>

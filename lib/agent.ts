@@ -131,6 +131,14 @@ export async function getAgentProperties(): Promise<{
   return response.data;
 }
 
+// ── Delete a property (also removes saves & inquiries) ────────
+export async function deleteProperty(
+  propertyId: string,
+): Promise<{ message: string; propertyId: string }> {
+  const response = await api.delete(`/api/agent/property/${propertyId}`);
+  return response.data;
+}
+
 // ── Get single property ───────────────────────────────────────
 export async function getPropertyById(
   propertyId: string,
