@@ -34,6 +34,7 @@ import {
   rememberPaymentReturn,
   setSubscriptionCache,
   useSubscription,
+  verifyPayment,
 } from "@/lib/subscription";
 import { SkeletonText } from "@/components/ui";
 
@@ -112,6 +113,8 @@ export default function SubscriptionView({ mode }: { mode: AccountMode }) {
 
   const [payments, setPayments] = useState<Payment[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(true);
+  // References currently being re-checked with Paystack
+  const [checking, setChecking] = useState<Set<string>>(new Set());
 
   const [buying, setBuying] = useState<string | null>(null);
   const [buyError, setBuyError] = useState("");
@@ -135,11 +138,52 @@ export default function SubscriptionView({ mode }: { mode: AccountMode }) {
     loadPlans();
     refresh();
     getPayments()
-      .then(setPayments)
+      .then((list) => {
+        setPayments(list);
+        // A payment stays PENDING if the user never got back to the callback
+        // page (closed the tab, wrong callback URL…) and the webhook hasn't
+        // landed. verify asks Paystack directly and adds the points once, so
+        // re-check recent pending ones here.
+        const recent = list
+          .filter(
+            (p) =>
+              p.status?.toUpperCase() === "PENDING" &&
+              Date.now() - new Date(p.createdAt).getTime() < 7 * 86_400_000,
+          )
+          .slice(0, 5)
+          .map((p) => p.reference);
+        recent.forEach((ref) => recheckPayment(ref));
+      })
       .catch((err) => console.error("Failed to load payments:", err))
       .finally(() => setPaymentsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
+
+  const recheckPayment = async (reference: string) => {
+    setChecking((s) => new Set(s).add(reference));
+    try {
+      const res = await verifyPayment(reference);
+      setPayments((list) =>
+        list.map((p) =>
+          p.reference === reference
+            ? { ...p, status: res.status, paidAt: res.paidAt ?? p.paidAt }
+            : p,
+        ),
+      );
+      if (res.status?.toUpperCase() === "SUCCESS") {
+        if (res.subscription) setSubscriptionCache(res.subscription);
+        refresh();
+      }
+    } catch (err) {
+      console.error("Failed to re-check payment:", reference, err);
+    } finally {
+      setChecking((s) => {
+        const next = new Set(s);
+        next.delete(reference);
+        return next;
+      });
+    }
+  };
 
   const active = !!subscription?.active;
   const currentPlan = useMemo(
@@ -680,7 +724,21 @@ export default function SubscriptionView({ mode }: { mode: AccountMode }) {
                       <p className="font-poppins font-semibold">
                         {formatNaira(p.amountNaira)}
                       </p>
-                      <StatusChip status={p.status} />
+                      {checking.has(p.reference) ? (
+                        <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-500">
+                          <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          Checking
+                        </span>
+                      ) : p.status?.toUpperCase() === "PENDING" ? (
+                        <button
+                          onClick={() => recheckPayment(p.reference)}
+                          className="flex cursor-pointer items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary transition-colors hover:bg-primary/15"
+                        >
+                          <RefreshCw size={11} /> Pending · Check
+                        </button>
+                      ) : (
+                        <StatusChip status={p.status} />
+                      )}
                     </div>
                   </li>
                 );
