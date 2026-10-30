@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { logo } from "@/assets";
 import { useTheme } from "@/lib/theme";
+import { useUnreadChats, formatBadge } from "@/lib/useUnreadChats";
+import { useUser } from "@/context/UserContext";
 
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", path: "/agent/dashboard" },
@@ -63,6 +65,8 @@ function UserCard({ user }: { user: SideNavUser }) {
 
 function NavList({ onNavigate }: { onNavigate: (path: string) => void }) {
   const pathname = usePathname();
+  const { user } = useUser();
+  const unread = useUnreadChats("/agent/chat", user?.id);
 
   return (
     <nav className="flex flex-col gap-1">
@@ -81,6 +85,14 @@ function NavList({ onNavigate }: { onNavigate: (path: string) => void }) {
           >
             <Icon size={19} />
             {item.label}
+            {item.label === "Chat" && unread > 0 && (
+              <span
+                aria-label={`${unread} unread messages`}
+                className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-white"
+              >
+                {formatBadge(unread)}
+              </span>
+            )}
           </button>
         );
       })}
