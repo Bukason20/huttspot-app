@@ -7,21 +7,12 @@ import { useListing } from "@/context/ListingContext";
 import { getAgentProperties } from "@/lib/agent";
 import { PropertyResponse } from "@/lib/types";
 import { AgentDashboardSkeleton } from "@/components/ui";
-import { Plus, Home, Inbox, FileText, Layers } from "lucide-react";
-
-// Maps currentStep to the correct resume route
-const getResumeRoute = (currentStep: number) => {
-  switch (currentStep) {
-    case 1:
-      return "/agent/listings/add/location";
-    case 2:
-      return "/agent/listings/add/details";
-    case 3:
-      return "/agent/listings/add/media";
-    default:
-      return "/agent/listings/add";
-  }
-};
+import { Plus, Home, Inbox, FileText, Layers, MessageCircle } from "lucide-react";
+import {
+  getResumeRoute,
+  resumeFormData,
+} from "@/components/agent/listing/resume";
+import { getConversations, getOtherParticipant, Conversation } from "@/lib/chat";
 
 export default function AgentDashboardPage() {
   const router = useRouter();
@@ -29,6 +20,14 @@ export default function AgentDashboardPage() {
   const { setFormData, reset } = useListing();
   const [listings, setListings] = useState<PropertyResponse[]>([]);
   const [listingsLoading, setListingsLoading] = useState(true);
+  // Conversations power "New Requests" and "Recent clients"
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    getConversations()
+      .then(setConversations)
+      .catch((err) => console.error("Failed to load conversations", err));
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -46,27 +45,7 @@ export default function AgentDashboardPage() {
 
   const handleResume = (listing: PropertyResponse) => {
     // Pre-populate context with existing data
-    setFormData({
-      propertyId: listing._id,
-      propertyName: listing.title,
-      propertyType: listing.type,
-      listingFor: listing.purpose as any,
-      price: listing.price.toString(),
-      paymentType: listing.paymentType as any,
-      ...(listing.location && {
-        state: listing.location.state,
-        city: listing.location.city,
-        street: listing.location.street ?? "",
-      }),
-      ...(listing.details && {
-        bedrooms: listing.details.bedrooms.toString(),
-        bathrooms: listing.details.bathrooms.toString(),
-        toilets: listing.details.toilets.toString(),
-        parkingSpaces: listing.details.parkingSpaces.toString(),
-        amenities: listing.details.features,
-      }),
-    });
-
+    setFormData(resumeFormData(listing));
     router.push(getResumeRoute(listing.currentStep ?? 0));
   };
 
@@ -93,8 +72,8 @@ export default function AgentDashboardPage() {
       labelClass: "text-white/80",
     },
     {
-      label: "New Requests",
-      value: 0,
+      label: "Awaiting reply",
+      value: conversations.filter((c) => c.awaitingMyReply).length,
       icon: Inbox,
       className: "bg-primary/10",
       iconWrap: "bg-white text-primary",
@@ -266,9 +245,6 @@ export default function AgentDashboardPage() {
                             Resume
                           </button>
                         )}
-                        <button className="h-8 cursor-pointer rounded-full border border-red-200 px-4 text-xs font-semibold text-red-500">
-                          Remove
-                        </button>
                       </div>
                     </div>
 
@@ -291,9 +267,6 @@ export default function AgentDashboardPage() {
                           Resume
                         </button>
                       )}
-                      <button className="h-9 cursor-pointer rounded-full border border-red-200 px-5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50">
-                        Remove
-                      </button>
                     </div>
                   </div>
                 );
@@ -308,17 +281,56 @@ export default function AgentDashboardPage() {
             <h2 className="font-poppins text-lg font-semibold">
               Recent clients
             </h2>
-            <div className="mt-4 flex items-center">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="-ml-2 h-12 w-12 rounded-full border-2 border-white bg-gray-200 first:ml-0"
-                />
-              ))}
-            </div>
-            <p className="mt-4 text-sm text-gray-500">
-              House hunters you chat with will show up here.
-            </p>
+            {conversations.length === 0 ? (
+              <>
+                <div className="mt-4 flex items-center">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="-ml-2 h-12 w-12 rounded-full border-2 border-white bg-gray-200 first:ml-0"
+                    />
+                  ))}
+                </div>
+                <p className="mt-4 text-sm text-gray-500">
+                  House hunters you chat with will show up here.
+                </p>
+              </>
+            ) : (
+              <ul className="mt-3 flex flex-col">
+                {conversations.slice(0, 4).map((c) => {
+                  const other = getOtherParticipant(c, user?.id ?? "");
+                  return (
+                    <li key={c._id}>
+                      <button
+                        onClick={() => router.push(`/agent/chat/${c._id}`)}
+                        className="-mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-center gap-3 rounded-2xl p-2 text-left transition-colors hover:bg-gray-50"
+                      >
+                        {other?.profilePhoto ? (
+                          <img src={other.profilePhoto} alt="" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
+                        ) : (
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-white">
+                            {other?.name?.charAt(0) ?? "?"}
+                          </span>
+                        )}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-bold">{other?.name ?? "Huttspotter"}</span>
+                          <span className="block truncate text-xs text-gray-500">
+                            {c.propertySnapshot?.title ?? c.lastMessage}
+                          </span>
+                        </span>
+                        {c.awaitingMyReply ? (
+                          <span className="flex-shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-white">
+                            Reply
+                          </span>
+                        ) : (
+                          <MessageCircle size={16} className="flex-shrink-0 text-gray-400" />
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
 
           <div className="theme-keep rounded-3xl bg-[#1a1a1a] p-5 text-white sm:p-6">

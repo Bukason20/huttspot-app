@@ -1,53 +1,36 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CloudUpload, X, Star, ChevronLeft } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useListing } from "@/context/ListingContext";
 import { createListingStep4, uploadPropertyMedia } from "@/lib/agent";
-import StepHeader from "@/components/agent/StepHeader";
+import ListingWizard, {
+  ADD_STEPS,
+  ADD_ROUTES,
+} from "@/components/agent/listing/ListingWizard";
+import MediaFields, {
+  MIN_PHOTOS,
+  PhotoItem,
+  UploadProgress,
+  srcOf,
+} from "@/components/agent/listing/MediaFields";
+import { FormError } from "@/components/agent/listing/fields";
 
-export default function AddListingStep4() {
+export default function AddListingMedia() {
   const router = useRouter();
-  const { formData, setFormData, reset } = useListing();
+  const { formData, reset } = useListing();
 
-  const photoRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLInputElement>(null);
-
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const [coverIndex, setCoverIndex] = useState(0);
-  const [video, setVideo] = useState<File | undefined>();
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  // First photo = cover
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [video, setVideo] = useState<{ file?: File; preview?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Publishing...");
+  const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [published, setPublished] = useState<{ title: string; cover: string } | null>(null);
 
-  const canPublish = photos.length >= 3;
-
-  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
-    const newPhotos = [...photos, ...files].slice(0, 10);
-    setPhotos(newPhotos);
-    const newPreviews = [...photoPreviews];
-    files.forEach((file) => newPreviews.push(URL.createObjectURL(file)));
-    setPhotoPreviews(newPreviews.slice(0, 10));
-  };
-
-  const removePhoto = (index: number) => {
-    setPhotos(photos.filter((_, i) => i !== index));
-    setPhotoPreviews(photoPreviews.filter((_, i) => i !== index));
-    if (coverIndex === index) setCoverIndex(0);
-    else if (coverIndex > index) setCoverIndex(coverIndex - 1);
-  };
-
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setVideo(file);
-    setVideoPreview(URL.createObjectURL(file));
-  };
+  const canPublish = photos.length >= MIN_PHOTOS;
 
   const handlePublish = async () => {
     if (!canPublish || loading) return;
@@ -62,28 +45,25 @@ export default function AddListingStep4() {
 
     try {
       // Step 1 — Upload ALL photos and video in one request
-      setLoadingMessage("Uploading media...");
-      const mediaRes = await uploadPropertyMedia(photos, video ?? undefined);
+      // (cover is already first, so the returned URLs keep that order)
+      setLoadingMessage("Uploading photos...");
+      setProgress(0);
+      const files = photos.flatMap((p) => (p.kind === "file" ? [p.file] : []));
+      const mediaRes = await uploadPropertyMedia(files, video?.file, setProgress);
 
-      // Step 2 — Reorder so cover photo is first
-      const orderedPhotos = [...mediaRes.photos];
-      if (coverIndex !== 0 && orderedPhotos[coverIndex]) {
-        const cover = orderedPhotos.splice(coverIndex, 1)[0];
-        orderedPhotos.unshift(cover);
-      }
-
-      // Step 3 — Submit step 4 to publish with returned URLs
+      // Step 2 — Submit step 4 to publish with returned URLs
       setLoadingMessage("Publishing listing...");
+      setProgress(null);
       const publishRes = await createListingStep4({
         step: 4,
         propertyId: formData.propertyId,
         data: {
-          photos: orderedPhotos,
+          photos: mediaRes.photos,
           ...(mediaRes.video && { video: mediaRes.video }),
         },
       });
 
-      // Step 4 — Handle missing fields error from backend
+      // Step 3 — Handle missing fields error from backend
       if (publishRes.missingFields && publishRes.missingFields.length > 0) {
         setError(
           `Missing required fields: ${publishRes.missingFields.join(", ")}. Please go back and complete all steps.`,
@@ -91,182 +71,97 @@ export default function AddListingStep4() {
         return;
       }
 
-      // Step 5 — Success
+      // Step 4 — Success
+      setPublished({
+        title: formData.propertyName ?? "Your listing",
+        cover: mediaRes.photos[0] ?? srcOf(photos[0]),
+      });
       reset();
-      router.push("/agent/listings");
     } catch (err: any) {
       setError(err.message || "Failed to publish. Please try again.");
     } finally {
       setLoading(false);
+      setProgress(null);
       setLoadingMessage("Publishing...");
     }
   };
 
-  return (
-    <div className="min-h-screen bg-white px-6 pt-12 pb-10 flex flex-col">
-      <StepHeader
-        title="Upload New Listing"
-        subtitle="Upload Media"
-        currentStep={4}
-        totalSteps={4}
-      />
-
-      <div className="flex flex-col gap-6 flex-1">
-        {/* Photos */}
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-[#1a1a1a]">
-            Add Property Photos{" "}
-            <span className="text-gray-400 font-normal">(Minimum 3)</span>
-          </label>
-
-          <button
-            onClick={() => photoRef.current?.click()}
-            className="w-full border-2 border-dashed border-gray-300 rounded-2xl py-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-secondary transition-colors"
-          >
-            <CloudUpload size={48} className="text-gray-300" />
-            <p className="text-sm text-gray-400">
-              Supported formats: JPG, PNG 10MB
-            </p>
-          </button>
-
-          <input
-            ref={photoRef}
-            type="file"
-            accept="image/jpg,image/jpeg,image/png"
-            multiple
-            className="hidden"
-            onChange={handlePhotosChange}
-          />
-
-          {photoPreviews.length > 0 && (
-            <div className="flex flex-col gap-2 mt-2">
-              <p className="text-xs text-gray-400">
-                Tap ⭐ to set as cover photo
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {photoPreviews.map((preview, i) => (
-                  <div key={i} className="relative rounded-xl overflow-hidden">
-                    <img
-                      src={preview}
-                      alt={`photo ${i + 1}`}
-                      className="w-full h-24 object-cover"
-                    />
-                    {coverIndex === i && (
-                      <div className="absolute top-1 left-1 bg-secondary rounded-full px-2 py-0.5 flex items-center gap-1">
-                        <Star size={10} fill="white" color="white" />
-                        <span className="text-white text-[9px] font-semibold">
-                          Cover
-                        </span>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => setCoverIndex(i)}
-                      className={`absolute bottom-1 left-1 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all ${coverIndex === i ? "bg-secondary" : "bg-black/40"}`}
-                    >
-                      <Star
-                        size={12}
-                        fill={coverIndex === i ? "white" : "none"}
-                        color="white"
-                      />
-                    </button>
-                    <button
-                      onClick={() => removePhoto(i)}
-                      className="absolute top-1 right-1 w-6 h-6 bg-black/40 rounded-full flex items-center justify-center cursor-pointer"
-                    >
-                      <X size={12} color="white" />
-                    </button>
-                  </div>
-                ))}
-                {photoPreviews.length < 10 && (
-                  <button
-                    onClick={() => photoRef.current?.click()}
-                    className="w-full h-24 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-secondary transition-colors"
-                  >
-                    <span className="text-2xl text-gray-300">+</span>
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-gray-400">
-                {photoPreviews.length}/10 photos added
-                {photoPreviews.length < 3 && (
-                  <span className="text-primary ml-1">
-                    (need {3 - photoPreviews.length} more)
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Video */}
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-[#1a1a1a]">
-            Add Short Video Tour{" "}
-            <span className="text-gray-400 font-normal">(Optional)</span>
-          </label>
-          {videoPreview ? (
-            <div className="relative rounded-2xl overflow-hidden">
-              <video
-                src={videoPreview}
-                controls
-                className="w-full rounded-2xl"
-              />
-              <button
-                onClick={() => {
-                  setVideo(undefined);
-                  setVideoPreview(null);
-                }}
-                className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center cursor-pointer"
-              >
-                <X size={14} color="white" />
-              </button>
-            </div>
-          ) : (
+  if (published) {
+    return (
+      <ListingWizard
+        mode="add"
+        steps={ADD_STEPS}
+        stepIndex={3}
+        routeFor={(k) => ADD_ROUTES[k]}
+        title="Your listing is live"
+        description="Huttspotters can now find it and contact you."
+        primary={{ label: "", onClick: () => {} }}
+        bare
+      >
+        <div className="flex flex-col items-center py-4 text-center">
+          <div className="relative w-full max-w-sm">
+            <img
+              src={published.cover}
+              alt=""
+              className="aspect-[4/3] w-full rounded-3xl object-cover"
+            />
+            <span className="absolute -bottom-5 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white bg-secondary">
+              <Check size={22} strokeWidth={3} className="text-white" />
+            </span>
+          </div>
+          <p className="mt-9 font-poppins text-lg font-semibold">{published.title}</p>
+          <p className="mt-1 max-w-sm text-sm text-gray-500">
+            New inquiries will show up in Chat. You can edit the listing at any time.
+          </p>
+          <div className="mt-7 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
             <button
-              onClick={() => videoRef.current?.click()}
-              className="w-full border-2 border-dashed border-gray-300 rounded-2xl py-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-secondary transition-colors"
+              onClick={() => router.push("/agent/listings")}
+              className="h-12 flex-1 cursor-pointer rounded-full bg-secondary text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
             >
-              <CloudUpload size={48} className="text-gray-300" />
-              <p className="text-sm text-gray-400">
-                Supported formats: MP4 50MB
-              </p>
+              View my listings
             </button>
-          )}
-          <input
-            ref={videoRef}
-            type="file"
-            accept="video/mp4"
-            className="hidden"
-            onChange={handleVideoChange}
-          />
+            <button
+              onClick={() => router.push(ADD_ROUTES.basics)}
+              className="flex h-12 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border border-gray-200 bg-white text-[15px] font-semibold transition-colors hover:bg-gray-50"
+            >
+              <Plus size={17} /> Add another
+            </button>
+          </div>
         </div>
+      </ListingWizard>
+    );
+  }
 
-        <p className="text-sm text-primary font-medium">
-          Tip: Clear, bright photos get more views.
-        </p>
-
-        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
-      </div>
-
-      <div className="flex items-center justify-between mt-8">
-        <button
-          onClick={() => router.push("/agent/listings/add/location")}
-          className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer flex-shrink-0"
-        >
-          <ChevronLeft size={22} className="text-gray-500" />
-        </button>
-        <button
-          onClick={handlePublish}
-          disabled={!canPublish || loading}
-          className={`rounded-full py-4 px-6  text-[15px] font-semibold transition-all duration-200 ${
-            canPublish && !loading
-              ? "bg-secondary text-white cursor-pointer"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          {loading ? loadingMessage : "Publish Listing"}
-        </button>
-      </div>
-    </div>
+  return (
+    <ListingWizard
+      mode="add"
+      steps={ADD_STEPS}
+      stepIndex={3}
+      routeFor={(k) => ADD_ROUTES[k]}
+      title="Show it off"
+      description="Listings with clear photos get far more inquiries."
+      onBack={loading ? undefined : () => router.push(ADD_ROUTES.details)}
+      primary={{
+        label: "Publish listing",
+        onClick: handlePublish,
+        disabled: !canPublish,
+        loading,
+        loadingLabel: loadingMessage,
+      }}
+      preview={{
+        cover: photos[0] ? srcOf(photos[0]) : null,
+        photoCount: photos.length,
+      }}
+    >
+      <MediaFields
+        photos={photos}
+        setPhotos={setPhotos}
+        video={video}
+        setVideo={setVideo}
+        disabled={loading}
+      />
+      {loading && <UploadProgress label={loadingMessage} percent={progress} />}
+      <FormError message={error} />
+    </ListingWizard>
   );
 }

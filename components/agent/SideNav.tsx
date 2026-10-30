@@ -4,10 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutGrid,
   MessageCircle,
-  Star,
-  Bookmark,
-  MapPin,
-  Settings,
+  Building,
+  Plus,
   X,
   Moon,
   Sun,
@@ -15,16 +13,15 @@ import {
 } from "lucide-react";
 import { logo } from "@/assets";
 import { useTheme } from "@/lib/theme";
+import { useListing } from "@/context/ListingContext";
 import { useUnreadChats, formatBadge } from "@/lib/useUnreadChats";
 import { useUser } from "@/context/UserContext";
 
+// Agent menu: their own listings and conversations (no subscription / saved)
 const navItems = [
   { icon: LayoutGrid, label: "Dashboard", path: "/agent/dashboard" },
+  { icon: Building, label: "My Listings", path: "/agent/listings" },
   { icon: MessageCircle, label: "Chat", path: "/agent/chat" },
-  { icon: Star, label: "Subscription", path: "/agent/subscription" },
-  { icon: Bookmark, label: "Saved Listings", path: "/agent/saved" },
-  { icon: MapPin, label: "Location", path: "/agent/location" },
-  { icon: Settings, label: "Settings", path: "/agent/settings" },
 ];
 
 interface SideNavUser {
@@ -72,7 +69,9 @@ function NavList({ onNavigate }: { onNavigate: (path: string) => void }) {
     <nav className="flex flex-col gap-1">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = pathname?.startsWith(item.path);
+        const isActive =
+          pathname?.startsWith(item.path) &&
+          !pathname?.startsWith("/agent/listings/add");
         return (
           <button
             key={item.path}
@@ -97,6 +96,24 @@ function NavList({ onNavigate }: { onNavigate: (path: string) => void }) {
         );
       })}
     </nav>
+  );
+}
+
+/** Starts a fresh listing (same steps as "Add listing" on My Listings) */
+function NewListingButton({ onDone }: { onDone?: () => void }) {
+  const router = useRouter();
+  const { reset } = useListing();
+  return (
+    <button
+      onClick={() => {
+        reset();
+        router.push("/agent/listings/add");
+        onDone?.();
+      }}
+      className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a]"
+    >
+      <Plus size={17} /> New listing
+    </button>
   );
 }
 
@@ -193,7 +210,11 @@ export default function SideNav({ isOpen, onClose, user }: SideNavProps) {
 
         <UserCard user={user} />
 
-        <div className="mt-6 flex-1 overflow-y-auto">
+        <div className="mt-4">
+          <NewListingButton onDone={onClose} />
+        </div>
+
+        <div className="mt-5 flex-1 overflow-y-auto">
           <NavList onNavigate={handleNavigate} />
         </div>
 
@@ -230,6 +251,9 @@ export function DesktopSideNav({ user }: { user: SideNavUser }) {
       </p>
       <div className="flex-1 overflow-y-auto">
         <NavList onNavigate={(path) => router.push(path)} />
+        <div className="mt-5 px-1">
+          <NewListingButton />
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">

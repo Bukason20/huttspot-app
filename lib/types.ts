@@ -97,6 +97,11 @@ export interface ListingFormData {
   video?: File;
   // Persisted from backend after step 1
   propertyId?: string;
+  // "full" property or "shared" (sent with step 1)
+  listingType?: "full" | "shared";
+  // Edit flow: media already on the listing
+  existingPhotos?: string[];
+  existingVideo?: string;
 }
 
 // Step payloads sent to backend
