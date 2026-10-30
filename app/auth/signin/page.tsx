@@ -208,7 +208,17 @@ function SignInContent() {
             <label htmlFor="password" className={authLabelClass}>
               Password
             </label>
-            <button className="cursor-pointer text-sm font-semibold text-secondary hover:underline">
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  form.email.trim()
+                    ? `/auth/forgot-password?email=${encodeURIComponent(form.email.trim())}`
+                    : "/auth/forgot-password",
+                )
+              }
+              className="cursor-pointer text-sm font-semibold text-secondary hover:underline"
+            >
               Forgot Password?
             </button>
           </div>

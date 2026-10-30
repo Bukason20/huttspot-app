@@ -87,14 +87,14 @@ export default function MyListingsPage() {
       setNotice("Listing deleted");
       setConfirmDelete(null);
     } catch (err: any) {
-      const status = err?.response?.status;
+      // lib/api rejects with an Error carrying .status and .message
+      const status = err?.status;
       setDeleteError(
         status === 403
           ? "You can only delete listings you own."
           : status === 404
             ? "This listing no longer exists. Refresh the page."
-            : err?.response?.data?.message ||
-              "Couldn't delete the listing. Please try again.",
+            : err?.message || "Couldn't delete the listing. Please try again.",
       );
     } finally {
       setDeleting(false);
