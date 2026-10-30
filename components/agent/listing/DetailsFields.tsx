@@ -34,7 +34,7 @@ export default function DetailsFields({
   return (
     <>
       <Section title="Rooms" description="Use 0 if there are none.">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
           <Counter label="Bedrooms" icon={BedDouble} value={bedrooms} onChange={setBedrooms} />
           <Counter label="Bathrooms" icon={Bath} value={bathrooms} onChange={setBathrooms} />
           <Counter label="Toilets" icon={Droplets} value={toilets} onChange={setToilets} />

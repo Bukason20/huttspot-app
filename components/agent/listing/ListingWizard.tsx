@@ -297,60 +297,67 @@ export default function ListingWizard({
         )}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-visible">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:p-0 xl:grid-cols-[200px_minmax(0,1fr)_300px]">
-          {/* Steps rail (desktop) */}
-          <nav className="hidden lg:block">
-            <ol className="sticky top-8 flex flex-col">
-              {steps.map((s, i) => {
-                const done = i < stepIndex || (!!bare && i === stepIndex);
-                const current = i === stepIndex;
-                const canGo = !bare && i !== stepIndex && i <= maxReach;
-                return (
-                  <li key={s.key} className="relative flex gap-3 pb-7 last:pb-0">
-                    {i < steps.length - 1 && (
-                      <span
-                        className={`absolute left-[15px] top-9 h-[calc(100%-40px)] w-0.5 rounded-full ${
-                          done ? "bg-secondary" : "bg-gray-200"
-                        }`}
-                      />
-                    )}
-                    <button
-                      type="button"
-                      disabled={!canGo}
-                      onClick={() => canGo && router.push(routeFor(s.key))}
-                      className={`flex items-start gap-3 text-left ${
-                        canGo ? "cursor-pointer" : "cursor-default"
+      {/* ── Desktop stepper (horizontal, so the form keeps its width) ── */}
+      <nav aria-label="Steps" className="hidden pb-6 lg:block">
+        <ol className="grid grid-cols-4 gap-3">
+          {steps.map((s, i) => {
+            const done = i < stepIndex || (!!bare && i === stepIndex);
+            const current = i === stepIndex;
+            const canGo = !bare && i !== stepIndex && i <= maxReach;
+            return (
+              <li key={s.key} className="min-w-0">
+                <button
+                  type="button"
+                  disabled={!canGo}
+                  onClick={() => canGo && router.push(routeFor(s.key))}
+                  aria-current={current ? "step" : undefined}
+                  className={`group flex w-full flex-col gap-3 text-left ${
+                    canGo ? "cursor-pointer" : "cursor-default"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-full rounded-full transition-colors ${
+                      done || current ? "bg-secondary" : "bg-gray-200"
+                    }`}
+                  />
+                  <span className="flex items-center gap-2.5">
+                    <span
+                      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                        done
+                          ? "bg-secondary text-white"
+                          : current
+                            ? "border-2 border-secondary bg-white text-secondary"
+                            : "border-2 border-gray-200 bg-white text-gray-400"
                       }`}
                     >
+                      {done ? <Check size={13} strokeWidth={3} /> : i + 1}
+                    </span>
+                    <span className="min-w-0">
                       <span
-                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                          done
-                            ? "bg-secondary text-white"
-                            : current
-                              ? "border-2 border-secondary bg-white text-secondary"
-                              : "border-2 border-gray-200 bg-white text-gray-400"
-                        }`}
+                        className={`block truncate text-sm font-bold ${
+                          current || done ? "text-[#1a1a1a]" : "text-gray-400"
+                        } ${canGo ? "group-hover:text-secondary" : ""}`}
                       >
-                        {done ? <Check size={15} strokeWidth={3} /> : i + 1}
+                        {s.label}
                       </span>
-                      <span className="pt-1">
-                        <span
-                          className={`block text-sm font-bold ${
-                            current ? "text-[#1a1a1a]" : done ? "text-[#1a1a1a]" : "text-gray-400"
-                          } ${canGo ? "hover:text-secondary" : ""}`}
-                        >
-                          {s.label}
-                        </span>
-                        <span className="block text-xs text-gray-500">{s.hint}</span>
+                      <span className="block truncate text-xs text-gray-500">
+                        {s.hint}
                       </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </nav>
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
+      <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-visible">
+        <div
+          className={`mx-auto grid grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 sm:px-6 lg:p-0 ${
+            bare ? "max-w-3xl" : "xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px]"
+          }`}
+        >
           {/* Form card */}
           <div className="min-w-0 rounded-3xl border border-gray-100 bg-white">
             <div className="p-5 sm:p-7 lg:p-8">

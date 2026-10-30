@@ -30,9 +30,9 @@ export const PROPERTY_TYPES = [
 ];
 
 export const LISTING_OPTIONS = [
-  { value: "For Rent", label: "Rent" },
-  { value: "For Sale", label: "Sale" },
-  { value: "Room Share", label: "Room share" },
+  { value: "For Rent", label: "For rent", description: "Tenants pay to live or work there" },
+  { value: "For Sale", label: "For sale", description: "A buyer pays once and owns it" },
+  { value: "Room Share", label: "Room share", description: "Someone already lives there and wants a flatmate" },
 ] as const;
 
 export const PAYMENT_OPTIONS = [
@@ -42,8 +42,8 @@ export const PAYMENT_OPTIONS = [
 ] as const;
 
 export const LISTING_TYPE_OPTIONS = [
-  { value: "full", label: "Whole property" },
-  { value: "shared", label: "Shared" },
+  { value: "full", label: "Whole property", description: "One tenant or buyer gets the entire place" },
+  { value: "shared", label: "Shared space", description: "Rooms or spaces go to different people" },
 ] as const;
 
 export const AMENITIES = [
@@ -139,6 +139,60 @@ export function Segmented<T extends string>({
             }`}
           >
             {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Radio cards with a short explanation under each option */
+export function ChoiceCards<T extends string>({
+  options,
+  value,
+  onChange,
+  columns = 2,
+}: {
+  options: readonly { value: T; label: string; description: string }[];
+  value: T;
+  onChange: (v: T) => void;
+  columns?: 2 | 3;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      className={`grid grid-cols-[minmax(0,1fr)] gap-2 ${
+        columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
+      }`}
+    >
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(o.value)}
+            className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 text-left transition-colors ${
+              on
+                ? "border-secondary bg-secondary/5"
+                : "border-gray-200 bg-white hover:border-gray-300"
+            }`}
+          >
+            <span
+              className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                on ? "border-secondary bg-secondary" : "border-gray-300 bg-white"
+              }`}
+            >
+              {on && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-bold text-[#1a1a1a]">{o.label}</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-gray-500">
+                {o.description}
+              </span>
+            </span>
           </button>
         );
       })}

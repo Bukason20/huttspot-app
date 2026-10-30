@@ -16,6 +16,7 @@ import {
   LISTING_TYPE_OPTIONS,
   PAYMENT_OPTIONS,
   PriceInput,
+  ChoiceCards,
   Segmented,
   TextInput,
   TypePicker,
@@ -140,22 +141,22 @@ export default function AddListingStep1() {
         <TypePicker value={propertyType} onChange={setPropertyType} />
       </Field>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-7 sm:grid-cols-2 sm:gap-5">
-        <Field label="Listing for">
-          <Segmented
-            options={LISTING_OPTIONS}
-            value={listingFor}
-            onChange={(v) => setListingFor(v as PropertyPurpose)}
-          />
-        </Field>
-        <Field label="Listing type">
-          <Segmented
-            options={LISTING_TYPE_OPTIONS}
-            value={listingType}
-            onChange={setListingType}
-          />
-        </Field>
-      </div>
+      <Field label="Listing for" hint="What huttspotters can do with this property.">
+        <ChoiceCards
+          options={LISTING_OPTIONS}
+          value={listingFor}
+          onChange={(v) => setListingFor(v as PropertyPurpose)}
+          columns={3}
+        />
+      </Field>
+
+      <Field label="Listing type" hint="Whether one person takes the whole place or it is split.">
+        <ChoiceCards
+          options={LISTING_TYPE_OPTIONS}
+          value={listingType}
+          onChange={setListingType}
+        />
+      </Field>
 
       <Field label="Payment">
         <Segmented
