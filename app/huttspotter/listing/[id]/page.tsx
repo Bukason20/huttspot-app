@@ -23,6 +23,8 @@ import {
   Lock,
   ImageOff,
   SearchX,
+  Coins,
+  Sparkles,
 } from "lucide-react";
 import { getPropertyById } from "@/lib/properties";
 import { useSavedListings } from "@/lib/useSavedListings";
@@ -30,6 +32,16 @@ import { sendInquiry } from "@/lib/chat";
 import { getAllProperties } from "@/lib/properties";
 import { Property } from "@/lib/types";
 import { ListingDetailSkeleton } from "@/components/ui";
+import {
+  InquiryCost,
+  getInquiryCost,
+  refreshSubscription,
+  subscriptionErrorCode,
+  subscriptionPath,
+} from "@/lib/subscription";
+
+type Gate = "SUBSCRIPTION_REQUIRED" | "INSUFFICIENT_POINTS" | null;
+const draftKey = (id: string) => `huttspot_inquiry_draft_${id}`;
 
 export default function ListingDetailPage() {
   const router = useRouter();
@@ -51,6 +63,57 @@ export default function ListingDetailPage() {
   const [sendingInquiry, setSendingInquiry] = useState(false);
   const [inquirySent, setInquirySent] = useState(false);
   const [inquiryError, setInquiryError] = useState("");
+
+  // What contacting this agent costs (GET /api/chat/inquiry-cost)
+  const [cost, setCost] = useState<InquiryCost | null>(null);
+  const [costLoading, setCostLoading] = useState(true);
+  const [sendGate, setSendGate] = useState<Gate>(null);
+
+  const loadCost = () => {
+    setCostLoading(true);
+    return getInquiryCost({ propertyId: id })
+      .then((c) => setCost(c))
+      .catch((err) => {
+        // Not fatal: the inquiry endpoint still enforces the rules
+        console.error("Failed to load inquiry cost:", err);
+        setCost(null);
+      })
+      .finally(() => setCostLoading(false));
+  };
+
+  useEffect(() => {
+    loadCost();
+    // Restore a message typed before going off to subscribe
+    try {
+      const draft = sessionStorage.getItem(draftKey(id));
+      if (draft) setInquiryMessage(draft);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const isFree = !!cost && (cost.alreadyContacted || cost.cost === 0);
+  const gate: Gate =
+    sendGate ??
+    (cost && !cost.canContact && !isFree
+      ? cost.active
+        ? "INSUFFICIENT_POINTS"
+        : "SUBSCRIPTION_REQUIRED"
+      : null);
+
+  const openInquiry = () => {
+    setSendGate(null);
+    setInquiryError("");
+    setShowInquiryModal(true);
+    loadCost();
+  };
+
+  const goSubscribe = () => {
+    try {
+      if (inquiryMessage.trim())
+        sessionStorage.setItem(draftKey(id), inquiryMessage);
+    } catch {}
+    router.push(subscriptionPath("HUTTSPOTTER", `/huttspotter/listing/${id}`));
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -85,6 +148,12 @@ export default function ListingDetailPage() {
       setInquirySent(true);
       setInquiryMessage("");
       setConversationId(res.conversation._id);
+      try {
+        sessionStorage.removeItem(draftKey(id));
+      } catch {}
+      // Points may have changed; future inquiries to this agent are free
+      refreshSubscription();
+      loadCost();
 
       // isNewContext = true means property context switched on existing chat
       // either way we navigate to the same conversation
@@ -95,6 +164,11 @@ export default function ListingDetailPage() {
         );
       }
     } catch (err: any) {
+      const code = subscriptionErrorCode(err);
+      if (code) {
+        setSendGate(code);
+        return;
+      }
       setInquiryError(err.message || "Failed to send. Try again.");
     } finally {
       setSendingInquiry(false);
@@ -314,7 +388,7 @@ export default function ListingDetailPage() {
             {/* CTA */}
             <div className="mt-6 flex items-center gap-3">
               <button
-                onClick={() => setShowInquiryModal(true)}
+                onClick={openInquiry}
                 className="flex h-13 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
               >
                 <MessageCircle size={18} />
@@ -337,6 +411,34 @@ export default function ListingDetailPage() {
                 />
               </button>
             </div>
+
+            {/* What contacting costs */}
+            {!costLoading && cost && (
+              <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+                {isFree ? (
+                  <>
+                    <Check size={14} className="text-secondary" />
+                    Free: you&apos;ve already contacted this agent
+                  </>
+                ) : gate === "SUBSCRIPTION_REQUIRED" ? (
+                  <>
+                    <Lock size={13} className="text-primary" />
+                    A subscription is needed to contact agents
+                  </>
+                ) : gate === "INSUFFICIENT_POINTS" ? (
+                  <>
+                    <Coins size={14} className="text-primary" />
+                    You&apos;re out of points. Top up to contact this agent
+                  </>
+                ) : (
+                  <>
+                    <Coins size={14} className="text-secondary" />
+                    Uses {cost.cost} {cost.cost === 1 ? "point" : "points"} ·{" "}
+                    {cost.pointsBalance} left
+                  </>
+                )}
+              </p>
+            )}
 
             {/* Agent */}
             <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-gray-200 p-4">
@@ -509,6 +611,63 @@ export default function ListingDetailPage() {
                   </button>
                 </div>
 
+                {gate ? (
+                  // ── No plan / no points: send them to subscribe ──
+                  <div className="pt-2">
+                    <div className="rounded-3xl bg-[#f3efe6] p-5 sm:p-6">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white">
+                        {gate === "SUBSCRIPTION_REQUIRED" ? (
+                          <Lock size={20} className="text-primary" />
+                        ) : (
+                          <Coins size={20} className="text-primary" />
+                        )}
+                      </span>
+                      <h3 className="mt-4 font-poppins text-lg font-semibold text-[#1a1a1a]">
+                        {gate === "SUBSCRIPTION_REQUIRED"
+                          ? "Subscribe to contact agents"
+                          : "You're out of points"}
+                      </h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-gray-500">
+                        {gate === "SUBSCRIPTION_REQUIRED"
+                          ? "A plan gives you points for 30 days. Each new agent uses 1 point, and every message after that is free."
+                          : "Contacting a new agent uses 1 point. Top up to reach this agent; chats you've already started stay free."}
+                      </p>
+                      <ul className="mt-4 flex flex-col gap-2 text-sm">
+                        {[
+                          "Pay once with card, transfer or USSD",
+                          "Points last 30 days",
+                          "We bring you back here after paying",
+                        ].map((t) => (
+                          <li key={t} className="flex items-center gap-2">
+                            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-secondary">
+                              <Check size={12} strokeWidth={3} className="text-white" />
+                            </span>
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {inquiryMessage.trim() && (
+                      <p className="mt-3 text-center text-xs text-gray-500">
+                        We&apos;ll keep the message you typed.
+                      </p>
+                    )}
+                    <button
+                      onClick={goSubscribe}
+                      className="mt-4 flex h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
+                    >
+                      <Sparkles size={16} />
+                      {gate === "SUBSCRIPTION_REQUIRED" ? "See plans" : "Top up points"}
+                    </button>
+                    <button
+                      onClick={() => setShowInquiryModal(false)}
+                      className="mt-2 h-11 w-full cursor-pointer rounded-full text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#1a1a1a]"
+                    >
+                      Maybe later
+                    </button>
+                  </div>
+                ) : (
+                <>
                 <p className="mb-4 flex items-start gap-2 rounded-2xl bg-[#f7f7f5] p-3 text-xs leading-relaxed text-gray-500">
                   <Lock size={14} className="mt-0.5 flex-shrink-0 text-secondary" />
                   Your contact details will be shared with the agent only after
@@ -529,6 +688,29 @@ export default function ListingDetailPage() {
                   </p>
                 )}
 
+                {/* Cost of this inquiry */}
+                <div className="mb-4 flex min-h-5 items-center justify-between gap-3 text-xs font-semibold">
+                  {costLoading ? (
+                    <span className="h-3 w-40 animate-pulse rounded-full bg-gray-200" />
+                  ) : isFree ? (
+                    <span className="flex items-center gap-1.5 text-secondary">
+                      <Check size={14} /> Free: you&apos;ve already contacted
+                      this agent
+                    </span>
+                  ) : cost ? (
+                    <>
+                      <span className="flex items-center gap-1.5 text-gray-500">
+                        <Coins size={14} className="text-secondary" />
+                        Uses {cost.cost} {cost.cost === 1 ? "point" : "points"}
+                      </span>
+                      <span className="text-gray-500">
+                        {cost.pointsBalance}{" "}
+                        {cost.pointsBalance === 1 ? "point" : "points"} left
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+
                 <button
                   onClick={handleSendInquiry}
                   disabled={!inquiryMessage.trim() || sendingInquiry}
@@ -541,6 +723,8 @@ export default function ListingDetailPage() {
                   <Send size={16} />
                   {sendingInquiry ? "Sending..." : "Send Inquiry"}
                 </button>
+                </>
+                )}
               </>
             ) : (
               // Success state

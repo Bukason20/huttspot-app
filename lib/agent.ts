@@ -100,6 +100,7 @@ export async function updateListingStep4(
 export async function uploadPropertyMedia(
   photos: File[],
   video?: File,
+  onProgress?: (percent: number) => void,
 ): Promise<{ photos: string[]; video?: string }> {
   const formData = new FormData();
   photos.forEach((photo) => formData.append("photos", photo));
@@ -111,6 +112,12 @@ export async function uploadPropertyMedia(
     video?: string;
   }>("/api/user/property/upload-media", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    // Optional upload progress for the UI
+    onUploadProgress: onProgress
+      ? (e) => {
+          if (e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      : undefined,
   });
 
   return { photos: response.data.photos, video: response.data.video };
@@ -121,6 +128,14 @@ export async function getAgentProperties(): Promise<{
   properties: PropertyResponse[];
 }> {
   const response = await api.get("/api/agent/property/my-properties");
+  return response.data;
+}
+
+// ── Delete a property (also removes saves & inquiries) ────────
+export async function deleteProperty(
+  propertyId: string,
+): Promise<{ message: string; propertyId: string }> {
+  const response = await api.delete(`/api/agent/property/${propertyId}`);
   return response.data;
 }
 

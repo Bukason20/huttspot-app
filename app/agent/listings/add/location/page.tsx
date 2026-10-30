@@ -4,10 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useListing } from "@/context/ListingContext";
 import { createListingStep2 } from "@/lib/agent";
-import StepHeader from "@/components/agent/StepHeader";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import ListingWizard, {
+  ADD_STEPS,
+  ADD_ROUTES,
+} from "@/components/agent/listing/ListingWizard";
+import LocationFields from "@/components/agent/listing/LocationFields";
+import { FormError } from "@/components/agent/listing/fields";
 
-export default function AddListingStep3() {
+export default function AddListingLocation() {
   const router = useRouter();
   const { formData, setFormData } = useListing();
 
@@ -42,7 +46,7 @@ export default function AddListingStep3() {
       });
 
       setFormData({ state, city, street });
-      router.push("/agent/listings/add/media");
+      router.push(ADD_ROUTES.details);
     } catch (err: any) {
       setError(err.message || "Failed to save. Please try again.");
     } finally {
@@ -51,91 +55,31 @@ export default function AddListingStep3() {
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 pt-12 pb-10 flex flex-col">
-      <StepHeader
-        title="Upload New Listing"
-        subtitle="Location details"
-        currentStep={3}
-        totalSteps={4}
+    <ListingWizard
+      mode="add"
+      steps={ADD_STEPS}
+      stepIndex={1}
+      routeFor={(k) => ADD_ROUTES[k]}
+      title="Where is it?"
+      description="Huttspotters search by area, so be as accurate as you can."
+      onBack={() => router.push(ADD_ROUTES.basics)}
+      primary={{
+        label: "Continue",
+        onClick: handleContinue,
+        disabled: !isValid,
+        loading,
+      }}
+      preview={{ city, state }}
+    >
+      <LocationFields
+        state={state}
+        city={city}
+        street={street}
+        setState={setState}
+        setCity={setCity}
+        setStreet={setStreet}
       />
-
-      <div className="flex flex-col gap-6 flex-1">
-        {/* State */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">State</label>
-          <input
-            type="text"
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-            placeholder="e.g. Rivers"
-            className="w-full border border-gray-300 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-300"
-          />
-        </div>
-
-        {/* City */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">City</label>
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="e.g. Port Harcourt"
-            className="w-full border border-gray-300 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-300"
-          />
-        </div>
-
-        {/* Street (optional) */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#1a1a1a]">
-            Street <span className="text-gray-400 font-normal">(Optional)</span>
-          </label>
-          <input
-            type="text"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            placeholder="e.g. 12 GRA Phase 2"
-            className="w-full border border-gray-300 rounded-full px-5 py-4 text-sm outline-none placeholder:text-gray-300"
-          />
-        </div>
-
-        {/* Map preview */}
-        <div className="flex-1 min-h-[250px] rounded-2xl overflow-hidden bg-gray-200">
-          <iframe
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(
-              `${street} ${city} ${state} Nigeria`,
-            )}&output=embed&z=13`}
-            width="100%"
-            height="100%"
-            style={{ border: 0, minHeight: 250 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-
-        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
-      </div>
-
-      <div className="flex items-center gap-3 mt-8 justify-between">
-        <button
-          onClick={() => router.push("/agent/listings/add/details")}
-          className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer flex-shrink-0"
-        >
-          <ChevronLeft size={22} className="text-gray-500" />
-        </button>
-        <button
-          onClick={handleContinue}
-          disabled={!isValid || loading}
-          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 ${
-            isValid && !loading
-              ? "bg-secondary text-white cursor-pointer"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          {/* {loading ? "Saving..." : "Continue"} */}
-          <ChevronRight size={22} />
-        </button>
-      </div>
-    </div>
+      <FormError message={error} />
+    </ListingWizard>
   );
 }

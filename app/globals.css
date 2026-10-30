@@ -152,6 +152,12 @@ body {
   background-color: var(--dk-canvas);
 }
 
+/* Full-screen surfaces that should match the page background (e.g. the
+   listing wizard on mobile) */
+[data-theme="dark"] .hs-themed .hs-canvas.bg-\[\#f7f7f5\] {
+  background-color: var(--dk-canvas);
+}
+
 /* Cards, sidebar, bottom nav, modals */
 [data-theme="dark"] .hs-themed .bg-white,
 [data-theme="dark"] .hs-themed .hover\:bg-white:hover {
