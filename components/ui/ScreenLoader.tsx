@@ -42,12 +42,23 @@ export const useScreenLoader = () => useContext(LoaderContext);
 // Quick actions finish before this, so the loader never just flashes
 const SHOW_DELAY_MS = 180;
 
-/** The H mark (orange / green with the white slash) */
-export function HuttspotMark({ className = "" }: { className?: string }) {
+/**
+ * The H mark, drawn as two halves split by the white slash. In the loader the
+ * halves drift apart along the slash and click back together while the mark
+ * breathes (see LOADER_CSS).
+ */
+export function HuttspotMark({
+  className = "",
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <svg
-      viewBox="0 0 136 147"
+      viewBox="-8 -12 152 171"
       className={className}
+      style={style}
       aria-hidden="true"
       focusable="false"
     >
@@ -55,19 +66,78 @@ export function HuttspotMark({ className = "" }: { className?: string }) {
         <clipPath id="hs-mark-h">
           <path d="M0 0H52V54H87V0H136V147H87V101H52V147H0Z" />
         </clipPath>
-        {/* The slash is cut out, so it shows the page behind it */}
-        <mask id="hs-mark-slash">
-          <rect width="136" height="147" fill="#fff" />
-          <path d="M-4 108L140 45" stroke="#000" strokeWidth="5" />
+        {/* Cuts the slash so it shows whatever is behind the mark */}
+        <mask id="hs-mark-slash" maskUnits="userSpaceOnUse" x="-8" y="-12" width="152" height="171">
+          <rect x="-8" y="-12" width="152" height="171" fill="#fff" />
+          <path d="M-8 109.8L144 43.3" stroke="#000" strokeWidth="5" />
         </mask>
       </defs>
-      <g clipPath="url(#hs-mark-h)" mask="url(#hs-mark-slash)">
-        <rect width="136" height="147" fill="#0a8754" />
-        <path d="M0 0H108V59.5L29 93.9V147H0Z" fill="#ff6b35" />
+      <g className="hs-mark-orange">
+        <g clipPath="url(#hs-mark-h)" mask="url(#hs-mark-slash)">
+          <path d="M0 0H108V59.5L29 93.9V147H0Z" fill="#ff6b35" />
+        </g>
+      </g>
+      <g className="hs-mark-green">
+        <g clipPath="url(#hs-mark-h)" mask="url(#hs-mark-slash)">
+          <path d="M108 0H136V147H29V93.9L108 59.5Z" fill="#0a8754" />
+        </g>
       </g>
     </svg>
   );
 }
+
+// Kept with the component (not in globals.css) so the loader always looks
+// right, even when a stale CSS cache is being served.
+const LOADER_CSS = `
+.hs-loader {
+  background: rgba(247, 247, 245, 0.62);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+  animation: hs-loader-in 180ms ease-out both;
+}
+.hs-loader-text { color: #1a1a1a; }
+[data-theme="dark"] .hs-loader { background: rgba(14, 17, 16, 0.66); }
+[data-theme="dark"] .hs-loader-text { color: #f2f2f0; }
+
+.hs-loader-mark {
+  transform-origin: center;
+  animation: hs-mark-breathe 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.hs-loader-mark .hs-mark-orange,
+.hs-loader-mark .hs-mark-green {
+  animation: 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.hs-loader-mark .hs-mark-orange { animation-name: hs-mark-part-orange; }
+.hs-loader-mark .hs-mark-green { animation-name: hs-mark-part-green; }
+.hs-loader-text { animation: hs-text-fade 1.8s ease-in-out infinite; }
+
+@keyframes hs-loader-in { from { opacity: 0; } to { opacity: 1; } }
+/* Shrinks a little as the halves part, grows back as they meet */
+@keyframes hs-mark-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.88); }
+}
+/* Halves slide apart across the slash, then click back together */
+@keyframes hs-mark-part-orange {
+  0%, 15%, 85%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-3px, -7px); }
+}
+@keyframes hs-mark-part-green {
+  0%, 15%, 85%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(3px, 7px); }
+}
+@keyframes hs-text-fade {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-loader-mark,
+  .hs-loader-mark .hs-mark-orange,
+  .hs-loader-mark .hs-mark-green { animation: none; }
+  .hs-loader-text { animation: hs-text-fade 2.4s ease-in-out infinite; }
+}
+`;
 
 export function ScreenLoaderProvider({
   children,
@@ -120,10 +190,30 @@ export function ScreenLoaderProvider({
         <div
           role="status"
           aria-live="polite"
-          className="hs-loader fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-5"
+          className="hs-loader"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 20,
+          }}
         >
-          <HuttspotMark className="hs-loader-mark h-[72px] w-auto" />
-          <p className="hs-loader-text min-h-5 px-6 text-center font-nunito text-sm font-semibold">
+          <style>{LOADER_CSS}</style>
+          <HuttspotMark className="hs-loader-mark" style={{ height: 88, width: "auto" }} />
+          <p
+            className="hs-loader-text font-nunito"
+            style={{
+              minHeight: 20,
+              padding: "0 24px",
+              textAlign: "center",
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
             {message ?? "Loading..."}
           </p>
         </div>
