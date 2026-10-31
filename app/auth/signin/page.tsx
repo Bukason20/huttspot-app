@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, CheckCircle, XCircle, X, MailWarning } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import {
   loginUser,
@@ -19,6 +19,7 @@ import AuthShell, {
 } from "@/components/ui/AuthShell";
 import { authImg3 } from "@/assets";
 import { useScreenLoader } from "@/components/ui/ScreenLoader";
+import AuthModal from "@/components/ui/AuthModal";
 
 interface GoogleTokenPayload {
   name: string;
@@ -27,7 +28,21 @@ interface GoogleTokenPayload {
   picture?: string;
 }
 
-type ModalType = "success" | "error" | null;
+type Result =
+  | { kind: "success"; name: string; next: string }
+  | { kind: "error"; message: string }
+  | { kind: "unverified"; email: string }
+  | null;
+
+// How long the "Welcome back" message stays before moving on by itself
+const SUCCESS_PAUSE_MS = 1600;
+
+const homeFor = (isOnboarded: boolean, accountMode?: string) =>
+  !isOnboarded
+    ? "/onboarding"
+    : accountMode === "AGENT"
+      ? "/agent/dashboard"
+      : "/huttspotter/dashboard";
 
 function SignInContent() {
   const router = useRouter();
@@ -36,32 +51,44 @@ function SignInContent() {
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [modal, setModal] = useState<ModalType>(null);
-  const [modalMessage, setModalMessage] = useState("");
-
-  // Unverified-email flow
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [resending, setResending] = useState(false);
+  const [busy, setBusy] = useState(false);
+  // Shown after the screen loader: how it went + what's next
+  const [result, setResult] = useState<Result>(null);
   const [resendError, setResendError] = useState("");
+  const leaving = useRef(false);
 
   const isValid = form.email.trim() !== "" && form.password.length >= 6;
 
-  // ── Route after successful auth ─────────────────────────────
-  const routeAfterLogin = (isOnboarded: boolean, accountMode?: string) => {
-    if (!isOnboarded) {
-      router.push("/onboarding");
-      return;
-    }
-    router.push(
-      accountMode === "AGENT" ? "/agent/dashboard" : "/huttspotter/dashboard",
+  // ── Success: show the message, then open their home ─────────
+  const goHome = (next: string) => {
+    if (leaving.current) return;
+    leaving.current = true;
+    setResult(null);
+    loader.show(
+      next === "/onboarding"
+        ? "Setting things up..."
+        : "Opening your dashboard...",
     );
+    router.push(next);
+  };
+
+  const succeed = (name: string, next: string) => {
+    loader.hide();
+    leaving.current = false;
+    setResult({ kind: "success", name, next });
+    setTimeout(() => goHome(next), SUCCESS_PAUSE_MS);
+  };
+
+  const fail = (message: string) => {
+    loader.hide();
+    setResult({ kind: "error", message });
   };
 
   // ── Email login ─────────────────────────────────────────────
   const handleSignIn = async () => {
-    if (!isValid || loading) return;
-    setLoading(true);
+    if (!isValid || busy) return;
+    setBusy(true);
+    loader.show("Signing you in...");
 
     try {
       const res = await loginUser({
@@ -69,56 +96,49 @@ function SignInContent() {
         password: form.password,
       });
 
-      setModalMessage(`Welcome back, ${res.user.name}!`);
-      setModal("success");
-
-      setTimeout(async () => {
-        // Profile fetch + opening the dashboard can take a moment
-        setModal(null);
-        loader.show("Signing you in...");
-        if (!res.user.isOnboarded) {
-          router.push("/onboarding");
-        } else {
-          // Fetch profile to get accountMode for routing
-          try {
-            const profile = await getUserProfile();
-            routeAfterLogin(true, profile.accountMode);
-          } catch {
-            // Fallback if profile fetch fails
-            router.push("/");
-          }
+      // Work out where they're going while the loader is still up
+      let next = homeFor(false);
+      if (res.user.isOnboarded) {
+        try {
+          const profile = await getUserProfile();
+          next = homeFor(true, profile.accountMode);
+        } catch {
+          next = "/"; // profile unavailable → home page
         }
-      }, 1500);
+      }
+      succeed(res.user.name, next);
     } catch (err: any) {
       // Account exists but email isn't verified → offer a fresh link
       if (isEmailNotVerifiedError(err)) {
+        loader.hide();
         setResendError("");
-        setUnverifiedEmail(err?.data?.email ?? form.email.trim());
+        setResult({
+          kind: "unverified",
+          email: err?.data?.email ?? form.email.trim(),
+        });
         return;
       }
-      setModalMessage(err.message || "Login failed. Please try again.");
-      setModal("error");
+      fail(err.message || "Login failed. Please try again.");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
   // ── Resend verification link, then go to "check your email" ─
-  const handleResendVerification = async () => {
-    if (!unverifiedEmail || resending) return;
-    setResending(true);
+  const handleResendVerification = async (email: string) => {
     setResendError("");
+    loader.show("Sending verification link...");
     try {
-      await resendVerification(unverifiedEmail);
+      await resendVerification(email);
       // Same handoff the signup page uses for the check-email screen
-      localStorage.setItem("pending_verify_email", unverifiedEmail);
+      localStorage.setItem("pending_verify_email", email);
+      setResult(null);
       router.push("/auth/check-email");
     } catch (err: any) {
+      loader.hide();
       setResendError(
         err.message || "We couldn't send the email. Please try again.",
       );
-    } finally {
-      setResending(false);
     }
   };
 
@@ -126,14 +146,11 @@ function SignInContent() {
   const handleGoogleSuccess = async (
     credentialResponse: CredentialResponse,
   ) => {
-    // No button spinner for Google, so show progress straight away
     loader.show("Signing you in...");
     try {
       if (!credentialResponse.credential) {
-        loader.hide();
         console.error("❌ No Google credential received");
-        setModalMessage("Google sign-in failed. Please try again.");
-        setModal("error");
+        fail("Google sign-in failed. Please try again.");
         return;
       }
 
@@ -144,26 +161,16 @@ function SignInContent() {
         const res = await googleAuth(idToken);
 
         if (res.user.isOnboarded) {
-          loader.hide();
-          setModalMessage(`Welcome back, ${res.user.name}!`);
-          setModal("success");
-
-          setTimeout(async () => {
-            setModal(null);
-            loader.show("Signing you in...");
-            try {
-              const profile = await getUserProfile();
-
-              console.log("GOOGLE LOGIN PROFILE:", profile);
-
-              routeAfterLogin(profile.isOnboarded, profile.accountMode);
-            } catch (err) {
-              console.error("Failed to fetch profile after Google login:", err);
-
-              routeAfterLogin(true, res.user.accountMode);
-            }
-          }, 1500);
+          let next = homeFor(true, res.user.accountMode);
+          try {
+            const profile = await getUserProfile();
+            next = homeFor(profile.isOnboarded, profile.accountMode);
+          } catch (err) {
+            console.error("Failed to fetch profile after Google login:", err);
+          }
+          succeed(res.user.name, next);
         } else {
+          // New Google user → straight into onboarding (loader stays up)
           setFormData({
             username: decoded.name,
             email: decoded.email,
@@ -174,15 +181,11 @@ function SignInContent() {
         }
       } catch (err: any) {
         console.error("❌ Google signin backend error:", err);
-        loader.hide();
-        setModalMessage("Google sign-in failed. Please try again.");
-        setModal("error");
+        fail("Google sign-in failed. Please try again.");
       }
     } catch (err: any) {
       console.error("❌ Google credential decode failed:", err.message);
-      loader.hide();
-      setModalMessage("Google sign-in failed. Please try again.");
-      setModal("error");
+      fail("Google sign-in failed. Please try again.");
     }
   };
 
@@ -199,7 +202,14 @@ function SignInContent() {
       panelHeading="Your next spot is a few taps away."
       panelText="Pick up where you left off — saved listings, chats with agents and more."
     >
-      <div className="flex flex-col gap-5">
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSignIn();
+        }}
+        className="flex flex-col gap-5"
+      >
         {/* Email */}
         <div className="flex flex-col gap-2">
           <label htmlFor="email" className={authLabelClass}>
@@ -208,6 +218,7 @@ function SignInContent() {
           <input
             id="email"
             type="email"
+            autoComplete="email"
             placeholder="example@gmail.com"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -239,6 +250,7 @@ function SignInContent() {
             <input
               id="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               placeholder="••••••••••"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -255,17 +267,17 @@ function SignInContent() {
           </div>
         </div>
 
-        {/* Sign in button */}
+        {/* Sign in button — progress shows in the screen loader */}
         <button
-          onClick={handleSignIn}
-          disabled={!isValid || loading}
+          type="submit"
+          disabled={!isValid || busy}
           className={`mt-2 h-12 w-full rounded-full text-[15px] font-semibold transition-colors duration-200 ${
-            isValid && !loading
+            isValid
               ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
               : "cursor-not-allowed bg-gray-100 text-gray-400"
           }`}
         >
-          {loading ? "Signing in..." : "Sign in"}
+          Sign in
         </button>
 
         {/* Divider */}
@@ -292,100 +304,72 @@ function SignInContent() {
         <p className="mt-2 text-center text-sm text-gray-500">
           Don&apos;t have an account?{" "}
           <button
+            type="button"
             onClick={() => router.push("/auth/signup")}
             className="cursor-pointer font-bold text-primary hover:underline"
           >
             Create account
           </button>
         </p>
-      </div>
+      </form>
 
-      {/* Modal */}
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
-          <div className="relative flex w-full max-w-[380px] flex-col items-center rounded-3xl bg-white p-8 text-center">
-            <button
-              onClick={() => setModal(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
-            >
-              <X size={18} />
-            </button>
-            <div
-              className={`mb-5 flex h-16 w-16 items-center justify-center rounded-full ${
-                modal === "success" ? "bg-secondary/10" : "bg-red-50"
-              }`}
-            >
-              {modal === "success" ? (
-                <CheckCircle size={30} className="text-secondary" />
-              ) : (
-                <XCircle size={30} className="text-red-500" />
-              )}
-            </div>
-            <h2 className="mb-2 font-poppins text-xl font-semibold text-[#1a1a1a]">
-              {modal === "success" ? "Login Successful!" : "Login Failed"}
-            </h2>
-            <p className="mb-7 text-sm leading-relaxed text-gray-500">
-              {modalMessage}
-            </p>
-            <button
-              onClick={() => setModal(null)}
-              className="h-12 w-full cursor-pointer rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a]"
-            >
-              {modal === "success" ? "Continue" : "Try again"}
-            </button>
-          </div>
-        </div>
+      {/* Result — shown once the screen loader is done */}
+      {result?.kind === "success" && (
+        <AuthModal
+          tone="success"
+          title={`Welcome back, ${result.name.split(" ")[0]}!`}
+          primary={{ label: "Continue", onClick: () => goHome(result.next) }}
+        >
+          {result.next === "/onboarding"
+            ? "You're signed in. Let's finish setting up your account."
+            : "You're signed in. Taking you to your dashboard."}
+        </AuthModal>
       )}
-      {/* Email not verified modal */}
-      {unverifiedEmail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6">
-          <div className="relative flex w-full max-w-[400px] flex-col items-center rounded-3xl bg-white p-8 text-center">
-            <button
-              onClick={() => setUnverifiedEmail(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
-            >
-              <X size={18} />
-            </button>
-            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <MailWarning size={30} className="text-primary" />
-            </div>
-            <h2 className="mb-2 font-poppins text-xl font-semibold text-[#1a1a1a]">
-              Verify your email first
-            </h2>
-            <p className="text-sm leading-relaxed text-gray-500">
-              Your account hasn&apos;t been verified yet. We&apos;ll send a new
-              verification link to
-            </p>
-            <p className="mb-6 mt-1 break-all text-sm font-semibold text-secondary">
-              {unverifiedEmail}
-            </p>
 
-            {resendError && (
-              <p className="mb-4 w-full rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
-                {resendError}
-              </p>
-            )}
+      {result?.kind === "error" && (
+        <AuthModal
+          tone="error"
+          title="Couldn't sign you in"
+          primary={{ label: "Try again", onClick: () => setResult(null) }}
+          secondary={{
+            label: "Forgot password?",
+            onClick: () =>
+              router.push(
+                form.email.trim()
+                  ? `/auth/forgot-password?email=${encodeURIComponent(form.email.trim())}`
+                  : "/auth/forgot-password",
+              ),
+          }}
+          onClose={() => setResult(null)}
+        >
+          {result.message}
+        </AuthModal>
+      )}
 
-            <button
-              onClick={handleResendVerification}
-              disabled={resending}
-              className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary text-sm font-semibold text-white transition-colors hover:bg-[#08744a] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {resending && (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              )}
-              {resending ? "Sending..." : "Send verification link"}
-            </button>
-            <button
-              onClick={() => setUnverifiedEmail(null)}
-              className="mt-3 h-11 w-full cursor-pointer rounded-full text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-50"
-            >
-              Not now
-            </button>
-          </div>
-        </div>
+      {result?.kind === "unverified" && (
+        <AuthModal
+          tone="warning"
+          title="Verify your email first"
+          primary={{
+            label: "Send verification link",
+            onClick: () => handleResendVerification(result.email),
+          }}
+          secondary={{ label: "Not now", onClick: () => setResult(null) }}
+          onClose={() => setResult(null)}
+        >
+          <p>
+            Your account hasn&apos;t been verified yet. We&apos;ll send a new
+            verification link to
+          </p>
+          <p className="mt-1 break-all font-semibold text-secondary">
+            {result.email}
+          </p>
+          {resendError && (
+            <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-red-600">
+              {resendError}
+            </p>
+          )}
+        </AuthModal>
       )}
     </AuthShell>
   );

@@ -17,6 +17,7 @@ import AuthShell, {
   authLabelClass,
 } from "@/components/ui/AuthShell";
 import { authImg1 } from "@/assets";
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 
 // Keeps the token across a refresh without leaving it in the address bar
 const TOKEN_KEY = "huttspot_reset_token";
@@ -104,6 +105,7 @@ function PasswordInput({
 function ResetPasswordContent() {
   const router = useRouter();
   const params = useSearchParams();
+  const loader = useScreenLoader();
 
   const [token, setToken] = useState("");
   const [stage, setStage] = useState<Stage>("checking");
@@ -132,7 +134,8 @@ function ResetPasswordContent() {
   const longEnough = password.length >= MIN_PASSWORD_LENGTH;
   const matches = confirm.length > 0 && confirm === password;
   const mismatch = confirm.length > 0 && confirm !== password;
-  const canSubmit = longEnough && matches && !loading;
+  const ready = longEnough && matches;
+  const canSubmit = ready && !loading;
 
   const checks = [
     { ok: longEnough, label: `At least ${MIN_PASSWORD_LENGTH} characters` },
@@ -153,6 +156,7 @@ function ResetPasswordContent() {
     if (!canSubmit) return;
     setLoading(true);
     setError("");
+    loader.show("Updating your password...");
     try {
       await resetPassword(token, password);
       forgetToken();
@@ -167,6 +171,7 @@ function ResetPasswordContent() {
         setError(message || "We couldn't update your password. Please try again.");
       }
     } finally {
+      loader.hide();
       setLoading(false);
     }
   };
@@ -316,13 +321,12 @@ function ResetPasswordContent() {
             type="submit"
             disabled={!canSubmit}
             className={`flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-colors duration-200 ${
-              canSubmit
+              ready
                 ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
                 : "cursor-not-allowed bg-gray-100 text-gray-400"
             }`}
           >
-            {loading && <Spinner />}
-            {loading ? "Updating password..." : "Update password"}
+            Update password
           </button>
         </form>
       )}

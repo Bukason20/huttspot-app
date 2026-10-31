@@ -16,6 +16,7 @@ import AuthShell, {
   authLabelClass,
 } from "@/components/ui/AuthShell";
 import { authImg1 } from "@/assets";
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 
 // Seconds to wait between resend requests
 const RESEND_COOLDOWN = 60;
@@ -32,6 +33,7 @@ function Spinner() {
 function ForgotPasswordContent() {
   const router = useRouter();
   const params = useSearchParams();
+  const loader = useScreenLoader();
 
   // Pre-filled when coming from the sign-in page
   const [email, setEmail] = useState(params.get("email") ?? "");
@@ -58,6 +60,8 @@ function ForgotPasswordContent() {
     setLoading(true);
     setError("");
     setResent(false);
+    // First send: full-screen loader, then the result. Resend: inline spinner.
+    if (!isResend) loader.show("Sending reset link...");
     try {
       await forgotPassword(trimmed);
       setStage("sent");
@@ -80,6 +84,7 @@ function ForgotPasswordContent() {
         );
       }
     } finally {
+      loader.hide();
       setLoading(false);
     }
   };
@@ -176,13 +181,12 @@ function ForgotPasswordContent() {
             type="submit"
             disabled={!emailValid || loading}
             className={`mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-colors duration-200 ${
-              emailValid && !loading
+              emailValid
                 ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
                 : "cursor-not-allowed bg-gray-100 text-gray-400"
             }`}
           >
-            {loading && <Spinner />}
-            {loading ? "Sending link..." : "Send reset link"}
+            Send reset link
           </button>
 
           <button

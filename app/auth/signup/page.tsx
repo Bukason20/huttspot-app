@@ -7,6 +7,8 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { registerUser, googleAuth } from "@/lib/auth";
 import { useOnboarding } from "@/context/OnboardingContext";
+import AuthModal from "@/components/ui/AuthModal";
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 import AuthShell, {
   authInputClass,
   authLabelClass,
@@ -23,6 +25,7 @@ interface GoogleTokenPayload {
 export default function SignUpPage() {
   const router = useRouter();
   const { setFormData } = useOnboarding();
+  const loader = useScreenLoader();
 
   const [form, setForm] = useState({
     name: "",
@@ -33,6 +36,7 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Shown in a dialog once the screen loader is done
   const [error, setError] = useState("");
 
   const isValid =
@@ -45,6 +49,7 @@ export default function SignUpPage() {
     if (!isValid || loading) return;
     setLoading(true);
     setError("");
+    loader.show("Creating your account...");
 
     try {
       // Register — only name, email, password
@@ -62,10 +67,12 @@ export default function SignUpPage() {
         isGoogleSignup: false,
       });
 
-      // Show verify email screen
+      // The "check your email" screen is the success message
       localStorage.setItem("pending_verify_email", form.email.trim());
+      loader.show("Sending your verification email...");
       router.push("/auth/check-email");
     } catch (err: any) {
+      loader.hide();
       setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
@@ -75,9 +82,11 @@ export default function SignUpPage() {
   const handleGoogleSuccess = async (
     credentialResponse: CredentialResponse,
   ) => {
+    loader.show("Creating your account...");
     try {
       if (!credentialResponse.credential) {
         console.error("❌ No Google credential received");
+        loader.hide();
         setError("Google sign-up failed. Please try again.");
         return;
       }
@@ -89,6 +98,7 @@ export default function SignUpPage() {
         const res = await googleAuth(idToken);
 
         if (res.user.isOnboarded) {
+          loader.show("Opening your dashboard...");
           router.push(
             res.user.accountMode === "AGENT"
               ? "/agent/dashboard"
@@ -107,10 +117,12 @@ export default function SignUpPage() {
         console.error("❌ Google signup backend error:", err);
 
         // TEMP: show error instead of silently redirecting
+        loader.hide();
         setError("Google sign-up failed. Please try again.");
       }
     } catch (err: any) {
       console.error("❌ Google credential decode failed:", err.message);
+      loader.hide();
       setError("Google sign-up failed. Please try again.");
     }
   };
@@ -128,7 +140,14 @@ export default function SignUpPage() {
       panelHeading="Moving to PH? Start your search here."
       panelText="Corpers, students, families and small businesses — connect with trusted agents and real people."
     >
-      <div className="flex flex-col gap-5">
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSignUp();
+        }}
+        className="flex flex-col gap-5"
+      >
         {/* Name */}
         <div className="flex flex-col gap-2">
           <label htmlFor="name" className={authLabelClass}>
@@ -137,6 +156,7 @@ export default function SignUpPage() {
           <input
             id="name"
             type="text"
+            autoComplete="name"
             placeholder="John Doe"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -152,6 +172,7 @@ export default function SignUpPage() {
           <input
             id="email"
             type="email"
+            autoComplete="email"
             placeholder="example@gmail.com"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -218,22 +239,17 @@ export default function SignUpPage() {
           Use at least 6 characters.
         </p>
 
-        {error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-600">
-            {error}
-          </p>
-        )}
-
+        {/* Progress shows in the screen loader */}
         <button
-          onClick={handleSignUp}
+          type="submit"
           disabled={!isValid || loading}
           className={`h-12 w-full rounded-full text-[15px] font-semibold transition-colors duration-200 ${
-            isValid && !loading
+            isValid
               ? "cursor-pointer bg-secondary text-white hover:bg-[#08744a]"
               : "cursor-not-allowed bg-gray-100 text-gray-400"
           }`}
         >
-          {loading ? "Creating account..." : "Sign up"}
+          Sign up
         </button>
 
         {/* Divider */}
@@ -259,13 +275,48 @@ export default function SignUpPage() {
         <p className="mt-2 text-center text-sm text-gray-500">
           Already have an account?{" "}
           <button
+            type="button"
             onClick={() => router.push("/auth/signin")}
             className="cursor-pointer font-bold text-primary hover:underline"
           >
             Sign in
           </button>
         </p>
-      </div>
+      </form>
+
+      {/* Result — shown once the screen loader is done */}
+      {error &&
+        (/already|exist|registered|in use/i.test(error) ? (
+          <AuthModal
+            tone="warning"
+            title="You already have an account"
+            primary={{
+              label: "Sign in instead",
+              onClick: () => router.push("/auth/signin"),
+            }}
+            secondary={{ label: "Use a different email", onClick: () => setError("") }}
+            onClose={() => setError("")}
+          >
+            {form.email.trim() ? (
+              <>
+                <span className="font-semibold text-[#1a1a1a]">{form.email.trim()}</span>{" "}
+                is already registered on HuttSpot. Sign in, or reset your
+                password if you&apos;ve forgotten it.
+              </>
+            ) : (
+              error
+            )}
+          </AuthModal>
+        ) : (
+          <AuthModal
+            tone="error"
+            title="Couldn't create your account"
+            primary={{ label: "Try again", onClick: () => setError("") }}
+            onClose={() => setError("")}
+          >
+            {error}
+          </AuthModal>
+        ))}
     </AuthShell>
   );
 }
