@@ -251,3 +251,38 @@ body {
 [data-theme="dark"] .hs-themed iframe[src*="maps.google"] {
   filter: invert(0.9) hue-rotate(180deg) brightness(0.95) contrast(0.9);
 }
+
+/* ── Screen loader (components/ui/ScreenLoader.tsx) ─────────── */
+.hs-loader {
+  background: rgb(247 247 245 / 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: hs-loader-in 160ms ease-out;
+}
+.hs-loader-text {
+  color: #1a1a1a;
+}
+[data-theme="dark"] .hs-loader {
+  background: rgb(14 17 16 / 0.6);
+}
+[data-theme="dark"] .hs-loader-text {
+  color: #f2f2f0;
+}
+.hs-loader-mark {
+  animation: hs-loader-pulse 1.5s ease-in-out infinite;
+}
+@keyframes hs-loader-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes hs-loader-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 1; transform: scale(0.86); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hs-loader-mark { animation: hs-loader-fade 2s ease-in-out infinite; }
+  @keyframes hs-loader-fade {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+}

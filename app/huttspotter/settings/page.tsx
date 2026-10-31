@@ -1,5 +1,6 @@
 "use client";
 
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
@@ -16,6 +17,7 @@ import {
 
 export default function HuttspotterSettingsPage() {
   const router = useRouter();
+  const loader = useScreenLoader();
   const { user } = useUser();
   const [notificationsOn, setNotificationsOn] = useState(true);
 
@@ -39,6 +41,7 @@ export default function HuttspotterSettingsPage() {
   ];
 
   const handleLogout = () => {
+    loader.show("Signing you out...");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("accountMode");

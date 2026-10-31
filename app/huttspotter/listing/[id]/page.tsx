@@ -1,5 +1,6 @@
 "use client";
 
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -45,6 +46,7 @@ const draftKey = (id: string) => `huttspot_inquiry_draft_${id}`;
 
 export default function ListingDetailPage() {
   const router = useRouter();
+  const loader = useScreenLoader();
   const params = useParams();
   const id = params.id as string;
 
@@ -743,6 +745,7 @@ export default function ListingDetailPage() {
                   onClick={() => {
                     setShowInquiryModal(false);
                     setInquirySent(false);
+                    loader.show("Opening chat...");
                     router.push(
                       conversationId
                         ? `/huttspotter/chat/${conversationId}`

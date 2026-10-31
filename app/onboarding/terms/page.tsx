@@ -1,5 +1,6 @@
 "use client";
 
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -37,6 +38,7 @@ const termsList = [
 
 export default function OnboardingTermsPage() {
   const router = useRouter();
+  const loader = useScreenLoader();
   const { formData, reset } = useOnboarding();
 
   const [agreedTerms, setAgreedTerms] = useState(false);
@@ -58,12 +60,14 @@ export default function OnboardingTermsPage() {
       let profilePhotoUrl: string | undefined;
       if (formData.capturedFaceImage) {
         setLoadingMessage("Uploading your photo...");
+        loader.show("Uploading your photo...");
         profilePhotoUrl = await uploadProfilePhoto(formData.capturedFaceImage);
       }
 
       console.log(formData);
       // Step 2 — Update user profile with all onboarding data
       setLoadingMessage("Saving your details...");
+      loader.show("Saving your details...");
       await updateUserProfile({
         gender: formData.gender!,
         phoneNumber: `${formData.countryCode}${formData.phoneNumber}`,
@@ -88,6 +92,7 @@ export default function OnboardingTermsPage() {
 
       // Step 3 — Fetch full profile to get accountMode for routing
       setLoadingMessage("Setting up your account...");
+      loader.show("Setting up your account...");
       const profile = await getUserProfile();
 
       console.log("AFTER UPDATE:", profile);
@@ -102,6 +107,7 @@ export default function OnboardingTermsPage() {
           : "/huttspotter/dashboard",
       );
     } catch (err: any) {
+      loader.hide();
       console.log(formData.capturedFaceImage);
       console.log(formData);
       setErrorModal(err.message || "Something went wrong. Please try again.");

@@ -18,6 +18,7 @@ import AuthShell, {
   authLabelClass,
 } from "@/components/ui/AuthShell";
 import { authImg3 } from "@/assets";
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 
 interface GoogleTokenPayload {
   name: string;
@@ -31,6 +32,7 @@ type ModalType = "success" | "error" | null;
 function SignInContent() {
   const router = useRouter();
   const { setFormData } = useOnboarding();
+  const loader = useScreenLoader();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -71,6 +73,9 @@ function SignInContent() {
       setModal("success");
 
       setTimeout(async () => {
+        // Profile fetch + opening the dashboard can take a moment
+        setModal(null);
+        loader.show("Signing you in...");
         if (!res.user.isOnboarded) {
           router.push("/onboarding");
         } else {
@@ -121,8 +126,11 @@ function SignInContent() {
   const handleGoogleSuccess = async (
     credentialResponse: CredentialResponse,
   ) => {
+    // No button spinner for Google, so show progress straight away
+    loader.show("Signing you in...");
     try {
       if (!credentialResponse.credential) {
+        loader.hide();
         console.error("❌ No Google credential received");
         setModalMessage("Google sign-in failed. Please try again.");
         setModal("error");
@@ -136,10 +144,13 @@ function SignInContent() {
         const res = await googleAuth(idToken);
 
         if (res.user.isOnboarded) {
+          loader.hide();
           setModalMessage(`Welcome back, ${res.user.name}!`);
           setModal("success");
 
           setTimeout(async () => {
+            setModal(null);
+            loader.show("Signing you in...");
             try {
               const profile = await getUserProfile();
 
@@ -163,11 +174,13 @@ function SignInContent() {
         }
       } catch (err: any) {
         console.error("❌ Google signin backend error:", err);
+        loader.hide();
         setModalMessage("Google sign-in failed. Please try again.");
         setModal("error");
       }
     } catch (err: any) {
       console.error("❌ Google credential decode failed:", err.message);
+      loader.hide();
       setModalMessage("Google sign-in failed. Please try again.");
       setModal("error");
     }

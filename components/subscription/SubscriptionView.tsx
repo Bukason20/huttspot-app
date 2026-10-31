@@ -1,5 +1,6 @@
 "use client";
 
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -101,6 +102,7 @@ function PlanCardSkeleton() {
 
 export default function SubscriptionView({ mode }: { mode: AccountMode }) {
   const router = useRouter();
+  const loader = useScreenLoader();
   const params = useSearchParams();
   const returnTo = params.get("return");
   const isAgent = mode === "AGENT";
@@ -205,9 +207,12 @@ export default function SubscriptionView({ mode }: { mode: AccountMode }) {
     try {
       // Bring them back to what they were doing (e.g. the listing) afterwards
       rememberPaymentReturn(returnTo);
+      loader.show("Taking you to Paystack...");
       const res = await initializePayment(plan.id);
+      // Stays up while the browser leaves for Paystack
       window.location.href = res.authorization_url;
     } catch (err: any) {
+      loader.hide();
       const code = err?.data?.code;
       setBuyError(
         code === "PAYMENTS_NOT_CONFIGURED"

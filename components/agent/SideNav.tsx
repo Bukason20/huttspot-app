@@ -1,5 +1,6 @@
 "use client";
 
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutGrid,
@@ -176,6 +177,7 @@ function LogoutButton({ onClick }: { onClick: () => void }) {
 // ── Mobile / tablet drawer ─────────────────────────────────────
 export default function SideNav({ isOpen, onClose, user }: SideNavProps) {
   const router = useRouter();
+  const loader = useScreenLoader();
 
   const handleNavigate = (path: string) => {
     router.push(path);
@@ -183,6 +185,7 @@ export default function SideNav({ isOpen, onClose, user }: SideNavProps) {
   };
 
   const handleLogout = () => {
+    loader.show("Signing you out...");
     clearSession();
     onClose();
     router.push("/auth/signin");
@@ -230,8 +233,10 @@ export default function SideNav({ isOpen, onClose, user }: SideNavProps) {
 // ── Desktop sidebar (lg and up) ───────────────────────────────
 export function DesktopSideNav({ user }: { user: SideNavUser }) {
   const router = useRouter();
+  const loader = useScreenLoader();
 
   const handleLogout = () => {
+    loader.show("Signing you out...");
     clearSession();
     router.push("/auth/signin");
   };

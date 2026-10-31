@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUserProfile } from "./user";
+import { useScreenLoader } from "@/components/ui/ScreenLoader";
 import { AccountMode } from "./types";
 
 export type Session =
@@ -87,6 +88,7 @@ const MAX_WAIT_MS = 4000;
  */
 export function useSessionNavigation(session: Session) {
   const router = useRouter();
+  const loader = useScreenLoader();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const resolver = useRef<((s: Session) => string) | null>(null);
 
@@ -111,13 +113,15 @@ export function useSessionNavigation(session: Session) {
   const go = useCallback(
     (key: string, route: (s: Session) => string) => {
       setPendingKey(key); // keep showing progress until the page changes
+      // On a slow connection the next page can take a moment to open
+      loader.show();
       if (session.status === "loading") {
         resolver.current = route;
       } else {
         router.push(route(session));
       }
     },
-    [session, router],
+    [session, router, loader],
   );
 
   return { go, pendingKey };
