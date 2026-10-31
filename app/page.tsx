@@ -21,7 +21,13 @@ import {
 } from "lucide-react";
 import ListingStack, { ListingGroup } from "@/components/home/ListingStack";
 import { getFeaturedProperties } from "@/lib/properties";
-import { useSession, gatedRoute, homeRouteFor } from "@/lib/session";
+import {
+  useSession,
+  useSessionNavigation,
+  gatedRoute,
+  homeRouteFor,
+  Session,
+} from "@/lib/session";
 import { FeaturedProperty } from "@/lib/types";
 import HeroSection from "@/components/home/HeroSection";
 import {
@@ -92,6 +98,21 @@ export default function HomePage() {
   const [allProperties, setAllProperties] = useState<FeaturedProperty[]>([]);
   // Signed in? Onboarded? (from the profile API — see lib/session.ts)
   const session = useSession();
+  // Navbar buttons work straight away; a click during loading waits for the answer
+  const { go, pendingKey } = useSessionNavigation(session);
+  const navClick =
+    (key: string, route: (s: Session) => string) =>
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      go(key, route);
+    };
+  // Signed in → onboarding or dashboard; visitors → sign up / sign in
+  const agentRoute = (s: Session) =>
+    s.status === "guest" ? "/auth?mode=signup" : homeRouteFor(s);
+  const navSpinner = (
+    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+  );
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -287,27 +308,26 @@ export default function HomePage() {
           </ul>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push("/auth?mode=signup")}
-              className="hidden h-10 cursor-pointer items-center rounded-full px-4 text-sm font-semibold text-[#1a1a1a] hover:bg-gray-100 sm:inline-flex"
+            <a
+              href="/auth?mode=signup"
+              onClick={navClick("nav-agent", agentRoute)}
+              aria-busy={pendingKey === "nav-agent"}
+              className="hidden h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-sm font-semibold text-[#1a1a1a] hover:bg-gray-100 sm:inline-flex"
             >
+              {pendingKey === "nav-agent" && navSpinner}
               Become an Agent
-            </button>
-            <button
-              onClick={() =>
-                router.push(
-                  session.status === "user"
-                    ? homeRouteFor(session)
-                    : "/auth/signin",
-                )
-              }
+            </a>
+            <a
+              href="/auth/signin"
+              onClick={navClick("nav-signin", homeRouteFor)}
+              aria-busy={pendingKey === "nav-signin"}
               className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#1a1a1a] pl-4 pr-1.5 text-sm font-semibold text-white transition-colors hover:bg-black"
             >
               Sign in
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
-                <ArrowUpRight size={15} />
+                {pendingKey === "nav-signin" ? navSpinner : <ArrowUpRight size={15} />}
               </span>
-            </button>
+            </a>
           </div>
         </nav>
 
@@ -327,12 +347,15 @@ export default function HomePage() {
                 </li>
               ))}
             </ul>
-            <button
-              onClick={() => router.push("/auth?mode=signup")}
-              className="mt-5 h-12 w-full cursor-pointer rounded-full border border-gray-300 text-sm font-semibold"
+            <a
+              href="/auth?mode=signup"
+              onClick={navClick("menu-agent", agentRoute)}
+              aria-busy={pendingKey === "menu-agent"}
+              className="mt-5 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-gray-300 text-sm font-semibold"
             >
+              {pendingKey === "menu-agent" && navSpinner}
               Become an Agent
-            </button>
+            </a>
           </div>
         )}
       </header>

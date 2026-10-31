@@ -1,9 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { ArrowRight, BadgeCheck, Check } from "lucide-react";
 import { heroAgent, heroClient, heroPortrait } from "@/assets";
-import { useSession, homeRouteFor } from "@/lib/session";
+import {
+  useSession,
+  useSessionNavigation,
+  homeRouteFor,
+  Session,
+} from "@/lib/session";
 
 const HIGHLIGHTS = [
   "Verified agents",
@@ -11,28 +15,29 @@ const HIGHLIGHTS = [
   "Roommate matching",
 ];
 
+// Signed in → onboarding or their dashboard; visitors → create an account
+const startRoute = (s: Session) =>
+  s.status === "guest" ? "/auth/signup" : homeRouteFor(s);
+
+const Spinner = ({ className = "" }: { className?: string }) => (
+  <span
+    className={`h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ${className}`}
+  />
+);
+
 const HeroSection = () => {
-  const router = useRouter();
   // Signed in? Onboarded? Agent or house hunter? (profile API — lib/session.ts)
   const session = useSession();
-  const checking = session.status === "loading";
+  // Buttons work straight away; a click during loading waits for the answer
+  const { go, pendingKey } = useSessionNavigation(session);
 
-  const handleGetStarted = () => {
-    if (session.status === "user") {
-      // Already logged in — onboarding if unfinished, otherwise their dashboard
-      router.push(homeRouteFor(session));
-    } else {
-      router.push("/auth/signup");
-    }
-  };
-
-  const handleBecomeAgent = () => {
-    if (session.status === "user") {
-      router.push(homeRouteFor(session));
-    } else {
-      router.push("/auth/signup");
-    }
-  };
+  // Real links, so a tap before the page's script has loaded still works
+  const handleClick =
+    (key: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      go(key, startRoute);
+    };
 
   return (
     <section className="grid items-center gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
@@ -54,23 +59,26 @@ const HeroSection = () => {
         </p>
 
         <div className="hero-btns mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center lg:justify-start">
-          <button
-            onClick={handleGetStarted}
-            disabled={checking}
-            className="group inline-flex h-12 cursor-pointer disabled:opacity-70 items-center justify-center gap-3 rounded-full bg-secondary pl-6 pr-2 text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
+          <a
+            href="/auth/signup"
+            onClick={handleClick("start")}
+            aria-busy={pendingKey === "start"}
+            className="group inline-flex h-12 cursor-pointer items-center justify-center gap-3 rounded-full bg-secondary pl-6 pr-2 text-[15px] font-semibold text-white transition-colors hover:bg-[#08744a]"
           >
             Get started
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-secondary transition-transform group-hover:translate-x-0.5">
-              <ArrowRight size={16} />
+              {pendingKey === "start" ? <Spinner /> : <ArrowRight size={16} />}
             </span>
-          </button>
-          <button
-            onClick={handleBecomeAgent}
-            disabled={checking}
-            className="inline-flex h-12 cursor-pointer disabled:opacity-70 items-center justify-center rounded-full border border-gray-300 px-6 text-[15px] font-semibold text-[#1a1a1a] transition-colors hover:bg-gray-50"
+          </a>
+          <a
+            href="/auth/signup"
+            onClick={handleClick("agent")}
+            aria-busy={pendingKey === "agent"}
+            className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-gray-300 px-6 text-[15px] font-semibold text-[#1a1a1a] transition-colors hover:bg-gray-50"
           >
+            {pendingKey === "agent" && <Spinner className="text-secondary" />}
             Become an Agent
-          </button>
+          </a>
         </div>
 
         <ul className="hero-btns mt-8 flex flex-wrap justify-center gap-x-5 gap-y-2 lg:justify-start">

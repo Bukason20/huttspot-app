@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getUserProfile } from "./user";
 import { AccountMode } from "./types";
 
@@ -21,48 +22,105 @@ export function useSession(): Session {
 
   useEffect(() => {
     let cancelled = false;
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setSession({ status: "guest" });
-      return;
-    }
-
-    getUserProfile()
-      .then((profile) => {
-        if (cancelled) return;
-        setSession({
-          status: "user",
-          isOnboarded: !!profile.isOnboarded,
-          accountMode: profile.accountMode,
-        });
-      })
-      .catch((err: any) => {
-        if (cancelled) return;
-        // Expired / invalid token → treat as signed out
-        if (err?.status === 401 || err?.status === 403) {
-          setSession({ status: "guest" });
-          return;
-        }
-        // Network hiccup → fall back to what was saved at login
-        try {
-          const saved = JSON.parse(localStorage.getItem("user") ?? "null");
-          setSession({
-            status: "user",
-            isOnboarded: !!saved?.isOnboarded,
-            accountMode: saved?.accountMode,
-          });
-        } catch {
-          setSession({ status: "guest" });
-        }
-      });
-
+    resolveSession().then((s) => {
+      if (!cancelled) setSession(s);
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
   return session;
+}
+
+// Several components on one page (navbar, hero…) ask at the same time:
+// share one profile request instead of sending one each.
+let inflight: Promise<Session> | null = null;
+
+function resolveSession(): Promise<Session> {
+  const token = localStorage.getItem("token");
+  if (!token) return Promise.resolve({ status: "guest" });
+  if (inflight) return inflight;
+
+  inflight = getUserProfile()
+    .then(
+      (profile): Session => ({
+        status: "user",
+        isOnboarded: !!profile.isOnboarded,
+        accountMode: profile.accountMode,
+      }),
+    )
+    .catch((err: any): Session => {
+      // Expired / invalid token → treat as signed out
+      if (err?.status === 401 || err?.status === 403) return { status: "guest" };
+      // Network hiccup → fall back to what was saved at login
+      try {
+        const saved = JSON.parse(localStorage.getItem("user") ?? "null");
+        return {
+          status: "user",
+          isOnboarded: !!saved?.isOnboarded,
+          accountMode: saved?.accountMode,
+        };
+      } catch {
+        return { status: "guest" };
+      }
+    })
+    .finally(() => {
+      // Don't cache past this page visit (e.g. after logging out)
+      setTimeout(() => (inflight = null), 0);
+    });
+  return inflight;
+}
+
+/** Longest a click waits for the profile before deciding on the token alone */
+const MAX_WAIT_MS = 4000;
+
+/**
+ * Buttons whose destination depends on the session stay clickable while the
+ * session loads. A click made during loading is remembered (that button shows
+ * a spinner) and carried out as soon as the session is known — or after
+ * MAX_WAIT_MS, deciding on the token alone, so a slow network never leaves
+ * the visitor stuck.
+ *
+ *   const { go, pendingKey } = useSessionNavigation(session);
+ *   onClick={() => go("start", (s) => …route for s…)}
+ */
+export function useSessionNavigation(session: Session) {
+  const router = useRouter();
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const resolver = useRef<((s: Session) => string) | null>(null);
+
+  // Run the remembered click once the session is known
+  useEffect(() => {
+    if (!resolver.current || session.status === "loading") return;
+    router.push(resolver.current(session));
+    resolver.current = null;
+  }, [session, router]);
+
+  // Safety net for very slow profile requests
+  useEffect(() => {
+    if (!pendingKey || session.status !== "loading") return;
+    const t = setTimeout(() => {
+      if (!resolver.current) return;
+      router.push(resolver.current(session));
+      resolver.current = null;
+    }, MAX_WAIT_MS);
+    return () => clearTimeout(t);
+  }, [pendingKey, session, router]);
+
+  const go = useCallback(
+    (key: string, route: (s: Session) => string) => {
+      setPendingKey(key); // keep showing progress until the page changes
+      if (session.status === "loading") {
+        resolver.current = route;
+      } else {
+        router.push(route(session));
+      }
+    },
+    [session, router],
+  );
+
+  return { go, pendingKey };
 }
 
 /** Where a signed-in user's "home" is: onboarding first, then their dashboard. */
