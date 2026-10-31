@@ -99,3 +99,35 @@ export function isEmailNotVerifiedError(err: any): boolean {
   const message: string = err?.data?.message ?? err?.message ?? "";
   return /verify your email/i.test(message);
 }
+
+// ── Password reset ─────────────────────────────────────────────
+
+/**
+ * Emails a password reset link. The backend answers 200 even when no
+ * account uses this email, so the UI must not say "account not found".
+ * Errors (err.status): 400 email missing · 403 email not verified (a new
+ * verification link is sent instead) · 429 too many attempts.
+ */
+export async function forgotPassword(email: string) {
+  const response = await api.post<{ message: string; email: string }>(
+    "/api/auth/forgot-password",
+    { email },
+  );
+  return response.data;
+}
+
+/**
+ * Sets a new password using the token from the reset email.
+ * Errors (err.status): 400 missing / invalid / expired token or password
+ * shorter than 6 characters · 404 user not found.
+ */
+export async function resetPassword(token: string, newPassword: string) {
+  const response = await api.post<{ message: string }>(
+    "/api/auth/reset-password",
+    { token, newPassword },
+  );
+  return response.data;
+}
+
+/** Backend minimum for passwords */
+export const MIN_PASSWORD_LENGTH = 6;
